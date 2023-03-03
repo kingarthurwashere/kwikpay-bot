@@ -17,6 +17,6 @@
     "mongodb": "^5.0.1",
     "mongoose": "^6.9.1",
     "node-telegram-bot-api": "^0.61.0",
-    "stripe": "^11.9.1"
+    "stripe": "^11.13.0"
   }
 }

@@ -6,6 +6,10 @@ let config = {
     },
 
   token: process.env.TELEGRAM_API_KEY,
+  redirect_url: process.env.REDIRECT_URL,
+  STRIPE_KEY: process.env.STRIPE_KEY,
+  SUBSCRIPTION_PRICE: process.env.SUBSCRIPTION_PRICE,
+  BOT_USER: process.env.BOT_USER
   
 };
 

@@ -1,4 +1,5 @@
 const { HotRecharge } = require("hotrecharge");
+
 const hotrecharge = new HotRecharge({
 email: "",
 password: "",
@@ -28,7 +29,22 @@ async function processZesaPayment (meterNumber, amount, mobileNumber) {
   // NetAmount being the total amount paid up // You may need to save ZesaReference i.e. you can use this in case of errors with the token // then you can enquire about this using the reference or RechargeID in the root tree
 
     const { Token, Units, NetAmount, Levy, Arrears, TaxAmount, ZesaReference } =
-      response.Tokens[ 0 ]; return Token;
+      response.Tokens[ 0 ]; 
+    const { Amount,Meter,AccountName,Address} = response
+
+      return {
+        amount:Amount,
+        meter: Meter,
+        name: AccountName,
+        address: Address,
+        token: Token,
+        units: Units,
+        netamount: NetAmount,
+        levy: Levy,
+        arrears: Arrears,
+        tax: TaxAmount,
+        reference: ZesaReference
+      }
   } else
   {
     console.log( response );
@@ -36,18 +52,23 @@ async function processZesaPayment (meterNumber, amount, mobileNumber) {
   }
 }
 
+
 //Airtime function
-async function processAirtime (amount, targetMobile, BrandID, CustomerSMS)
+async function processAirtime (amount, targetMobile, CustomerSMS)
 {
   const response = await hotrecharge.pinlessRecharge(
     targetMobile,
     amount,
-    BrandID,
     CustomerSMS
   );
   if ( response.ReplyCode == 2 )
   {
     //recharge was successful and you can add your own business logic here
     const { ReplyMsg } = response;
+    return ReplyMsg;
+  } else{
+    return null;
   }
 }
+
+module.exports = { processAirtime, processZesaPayment,checkZesaCustomer};

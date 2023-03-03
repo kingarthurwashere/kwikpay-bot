@@ -3,7 +3,7 @@ const express = require( 'express' );
 const app = express();
 const config = require( './config.js' )
 const mongoose = require( 'mongoose' );
-const bot = require('./bot.js')
+const bot = require('./services/bot.js')
 
 // Connecting to database
 mongoose.set('strictQuery',false);
