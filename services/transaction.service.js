@@ -19,7 +19,7 @@ async function create(transactionParam){
     // Save Transaction
     await transaction.save();
 
-    return Transaction.findOne({ chatId: transaction.chatId});
+    return await Transaction.findOne({ chatId: transaction.chatId});
 
 }
 
@@ -35,17 +35,22 @@ async function update(id, transactionParam) {
 
     await transaction.save();
 
-    return Transaction.findById(id);
+    return await Transaction.findById(id);
 
 }
 
 async function getOne(chatId){
 
-    return Transaction.findOne({chatId: chatId});
+    return await Transaction.findOne({chatId: chatId});
 }
 
-async function findIncompleteTransactions(){
-    return Transaction.find({$and:[{paymentStatus:'completed'},{transactionStatus:'pending'}]})
+async function findTransactionsPendingCompletion(chatId){
+
+    return await Transaction.findOne({$and:[{paymentStatus:'pending'},{chatId: chatId}]}).sort({startTime: 'desc'});
 }
 
-module.exports = { create,getOne, update,findIncompleteTransactions};
+async function findTransactionsPendingSettlement(){
+    return await Transaction.find({$and:[{paymentStatus:'completed'},{transactionStatus:'pending'}]})
+}
+
+module.exports = { create,getOne, update,findTransactionsPendingSettlement,findTransactionsPendingCompletion};

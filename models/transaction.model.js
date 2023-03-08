@@ -12,10 +12,12 @@ const Transaction = new Schema( {
     transactionType:{type: String,enum: ['airtime','zesa']},
     paymentPlatform: { type: String },
     targetedPhone: {type: String},
+    fname: {type: String},
     meterNumber:{type: String},
-    paymentStatus: {type: String, enum: ['pending','completed','cancelled']},
-    reference: {type: String},
-    transactionStatus: {type: String, enum: ['pending','completed','cancelled']},
+    paymentStatus: {type: String, enum: ['pending','completed','cancelled','failed']},
+    paymentReference: {type: String},
+    transactionReference: {type: String},
+    transactionStatus: {type: String, enum: ['pending','completed','cancelled','processing','failed']},
     startTime: {type: Date},
     endTime: {type: Date}
 } );

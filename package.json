@@ -16,6 +16,7 @@
     "hotrecharge": "^2.0.0",
     "mongodb": "^5.0.1",
     "mongoose": "^6.9.1",
+    "node-cron": "^3.0.2",
     "node-telegram-bot-api": "^0.61.0",
     "stripe": "^11.13.0"
   }

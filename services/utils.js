@@ -64,11 +64,33 @@ async function processAirtime (amount, targetMobile, CustomerSMS)
   if ( response.ReplyCode == 2 )
   {
     //recharge was successful and you can add your own business logic here
-    const { ReplyMsg } = response;
+    const { ReplyMsg,AgentReference } = response;
     return ReplyMsg;
   } else{
     return null;
   }
 }
 
-module.exports = { processAirtime, processZesaPayment,checkZesaCustomer};
+async function isValidPhone(phone){
+  if(phone && phone.startsWith("07") && phone.length==10){
+    return true
+  } else{
+    return false
+  }
+}
+
+async function isValidMeter(message){
+  const customer = await checkZesaCustomer(message)
+  if(customer && customer.Customer){
+    return {
+       meter:customer.Meter,
+      customerName:customer.CustomerInfo.CustomerName,
+      address:customer.CustomerInfo.Address
+    }
+  } else{
+    return null
+  }
+
+}
+
+module.exports = { processAirtime, processZesaPayment,checkZesaCustomer,isValidPhone,isValidMeter};

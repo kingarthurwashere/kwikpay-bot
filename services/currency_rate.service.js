@@ -44,4 +44,13 @@ async function getOne(id){
     return CurrencyRate.findById(id);
 }
 
-module.exports = { create,getOne, update};
+async function findByCurrencyFrom(currency){
+
+    return CurrencyRate.findOne();
+}
+async function findAll(){
+
+    return CurrencyRate.find({});
+}
+
+module.exports = { create,getOne, update,findByCurrencyFrom,findAll};
