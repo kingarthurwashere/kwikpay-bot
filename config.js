@@ -9,7 +9,8 @@ let config = {
   redirect_url: process.env.REDIRECT_URL,
   STRIPE_KEY: process.env.STRIPE_KEY,
   SUBSCRIPTION_PRICE: process.env.SUBSCRIPTION_PRICE,
-  BOT_USER: process.env.BOT_USER
+  BOT_USER: process.env.BOT_USER,
+  BOT_ADMINS: process.env.BOT_ADMINS?.split(',')
   
 };
 

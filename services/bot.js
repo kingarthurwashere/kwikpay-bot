@@ -15,6 +15,7 @@ bot.on('message', async (msg) => {
 
   if (msg && (msg.text.toLowerCase().includes('\/start'))) {
     //SAVE NEW USER IN DBASE 
+    console.log('---SET USERNAME---',msg.from.username)
     let user = await userService.findByChatId(chatId);
     if (user) {
       //USER EXIST DO NOTHING
@@ -47,7 +48,8 @@ bot.on('message', async (msg) => {
         remove_keyboard: true
       }
     };
-     if(await bot.getChatAdministrators(chatId).filter(m=>m.user.id ==msg.from.id).length>0){
+      
+     if(config.BOT_ADMINS && config.BOT_ADMINS .includes(msg.from.username)){
      entryOptions = {
         reply_markup: {
           inline_keyboard: [
@@ -74,6 +76,7 @@ bot.on('message', async (msg) => {
           remove_keyboard: true
         }
      }
+    }
     
     bot.sendMessage(chatId, `Hello, ${fname}. How may we help you today?`, entryOptions)
 
@@ -90,7 +93,7 @@ bot.on('message', async (msg) => {
           } else {
             transaction = await transactionService.update(transaction._id, {targetedPhone:msg.text })
             
-           await bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em>\n <b>1GDB = ZWD${exchangeRate} </b>`
+           await bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em>\n <b>1GDB = ZWD${exchangeRate.rate} </b>`
            +`\n<em>You are about to buy airtime for </em>: \n <b>${msg.text}</b>`
           +`\nBy clicking the <b>PAY</b> button you confirm that the details are correct, if not please click <b>CANCEL</b>`
           ,payOptions) 
@@ -115,7 +118,7 @@ bot.on('message', async (msg) => {
             bot.sendMessage(chatId, `The entered phone number "${msg.text}" is invalid. Zimbabwe phone numbers beging with "07" and have 10 digits:`, { reply_markup: { force_reply: true } })
           } else {
             transaction = transactionService.update(transaction._id, {targetedPhone: msg.text})
-            bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em> <b>1GDB = ZWD${exchangeRate} </b>\n\n
+            bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em> <b>1GDB = ZWD${exchangeRate.rate} </b>\n\n
             <b>The following are your transaction details: </b>\n`
               + `<em>Meter Number:</em> ${customer.meter} \n`
               + `<em>Customer Name:</em> ${customer.customerName} \n`
@@ -128,7 +131,6 @@ bot.on('message', async (msg) => {
 
       }
     }
-  }
   }
 })
 // HANDLE BUTTON RESPONSES CALL BACKS
@@ -193,7 +195,7 @@ bot.on("callback_query", async (msg) => {
           },
           parse_mode: 'HTML'
         };
-         bot.sendMessage(chatId, `Hello, <b>${fname}</b>. What Admin Functions do you want to perform now?`, adminOptions)
+         bot.sendMessage(chatId, `<b>@${fname}</b>. What Admin Functions do you want to perform now?`, adminOptions)
   }
   else{
   let transaction = await transactionService.findTransactionsPendingCompletion(chatId); 
