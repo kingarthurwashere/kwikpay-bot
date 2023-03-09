@@ -13,7 +13,8 @@ exports.success = async (req, res) => {
 
     const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
     const currency = session.currency
-    const amount = session.amount_total
+    //STRIPE BRINGS AMOUNT IN CENTS, SO CONVERT TO POUNDS BY DIVIDING WITH 100
+    const amount = session.amount_total?session.amount_total*0.01:0
     const reference = req.query.session_id
     const transaction = req.query.transaction
     const chatId = req.query.chat_id
