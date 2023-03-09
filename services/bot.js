@@ -15,7 +15,6 @@ bot.on('message', async (msg) => {
 
   if (msg && (msg.text.toLowerCase().includes('\/start'))) {
     //SAVE NEW USER IN DBASE 
-    console.log('---SET USERNAME---',msg.from.username)
     let user = await userService.findByChatId(chatId);
     if (user) {
       //USER EXIST DO NOTHING
@@ -158,7 +157,7 @@ bot.on("callback_query", async (msg) => {
     bot.sendMessage(chatId, `Currently we only support conversion to <b>ZWD</b>, Please select the currency you want to convert from:`,currencies)
   }else if(data=='updateRate'){
     let updateRateCurrencies = await formatCurrencyUpdateOptions();
-    bot.sendMessage(chatId, `Please select the rate you want to update,:`,updateRateCurrencies)
+    bot.sendMessage(chatId, `Please select the rate you want to update:`,updateRateCurrencies)
   } else if(data=='gbpRate'){
 
    await addCurrency('GBP',chatId)
@@ -275,13 +274,13 @@ async function formatCurrencyUpdateOptions(){
 async function updateCurrencyRate(currency,chatId){
   let rate = await currencyRateService.findByCurrencyFrom(currency);
   if(rate){
-  bot.sendMessage(chatId, `The current rate is <b>1${currency} -ZWD${rate.rate}.Please Enter the new rate or Enter <em>Not Now</em> to stop update:`,
+  bot.sendMessage(chatId, `The current rate is <b>1${currency} -ZWD${rate.rate}</b>.Please Enter the new rate or Enter <em>Not Now</em> to stop update:`,
   { reply_markup: { force_reply: true },parse_mode: 'HTML' }).then((msg)=>{
     bot.onReplyToMessage(msg.chat.id,msg.message_id,async (message)=>{
     if(isNaN(message.text)){
      await bot.sendMessage(chatId, `INVALID AMOUNT ENTERED, PLEASE RESTART THE PROCESS OF UPDATING  RATE:`) 
     }else{
-      await currencyRateService.update({rate:message.text}).then(async resp=>{
+      currencyRateService.update(rate._id,{rate:message.text}).then(async resp=>{
         await bot.sendMessage(chatId, `<b>${currency} - ZWD </b> Rate Successfully updated to <b>1${currency} =ZWD${message.text}</b>:`,{parse_mode: 'HTML'}) 
       })  
       }
