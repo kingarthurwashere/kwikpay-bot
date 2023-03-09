@@ -238,7 +238,7 @@ async function addCurrency(currency,chatId){
   { reply_markup: { force_reply: true },parse_mode: 'HTML' }).then((msg)=>{
     bot.onReplyToMessage(msg.chat.id,msg.message_id,async(message)=>{
     if(isNaN(message.text)){
-     await bot.sendMessage(chatId, `INVALID AMOUNT ENTERED, PLEASE RESTART THE PROCESS OF ADDING A NEW RATE:`) 
+     await bot.sendMessage(chatId, `INVALID AMOUNT ENTERED, PLEASE RESTART THE PROCESS OF ADDING A NEW RATE:`,currencies) 
     }else{
       await currencyRateService.create({currencyfrom:currency, currencyto: 'ZWD',rate:message.text})
       .then(async resp=>{
@@ -278,7 +278,8 @@ async function updateCurrencyRate(currency,chatId){
   { reply_markup: { force_reply: true },parse_mode: 'HTML' }).then((msg)=>{
     bot.onReplyToMessage(msg.chat.id,msg.message_id,async (message)=>{
     if(isNaN(message.text)){
-     await bot.sendMessage(chatId, `INVALID AMOUNT ENTERED, PLEASE RESTART THE PROCESS OF UPDATING  RATE:`) 
+      let updateRateCurrencies = await formatCurrencyUpdateOptions();
+     await bot.sendMessage(chatId, `INVALID AMOUNT ENTERED, PLEASE RESTART THE PROCESS OF UPDATING  RATE:`,updateRateCurrencies) 
     }else{
       currencyRateService.update(rate._id,{rate:message.text}).then(async resp=>{
         await bot.sendMessage(chatId, `<b>${currency} - ZWD </b> Rate Successfully updated to <b>1${currency} =ZWD${message.text}</b>:`,{parse_mode: 'HTML'}) 
