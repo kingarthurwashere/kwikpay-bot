@@ -145,14 +145,24 @@ bot.on("callback_query", async (msg) => {
     transactionStatus: 'pending',
     startTime: new Date(),
   }
+  const exchangeRate = await currencyRateService.findByCurrencyFrom('GBP');
   if (data == "airtime") {
+    
+    if(!exchangeRate){
+      bot.sendMessage(chatId, `GBP -ZWD Rate is not set, if you are an admin please set it, else contact your admin to set the rate.`)
+    }else{
     await transactionService.create(transData);
     bot.sendMessage(chatId, `Please enter the phone you want to recharge (example: 0778******):`, { reply_markup: { force_reply: true } })
+    }
   } else if (data == "zesa") {
+    
+    if(!exchangeRate){
+      bot.sendMessage(chatId, `GBP -ZWD Rate is not set, if you are an admin please set it, else contact your admin to set the rate.`)
+    }else{
     transData.transactionType = 'zesa';
     await transactionService.create(transData);
     bot.sendMessage(chatId, `Please enter the zesa meter number you want to recharge:`, { reply_markup: { force_reply: true } })
-
+    }
   } else if(data =='addRate'){
     bot.sendMessage(chatId, `Currently we only support conversion to <b>ZWD</b>, Please select the currency you want to convert from:`,currencies)
   }else if(data=='updateRate'){

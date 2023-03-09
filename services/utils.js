@@ -1,8 +1,9 @@
 const { HotRecharge } = require("hotrecharge");
+const config = require('../config');
 
 const hotrecharge = new HotRecharge({
-email: "",
-password: "",
+email: config.HOT_RECHARGE_EMAIL,
+password: config.HOT_RECHARGE_PW,
 });
 
 // Use this to request for verify customer information

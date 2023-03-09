@@ -10,7 +10,9 @@ let config = {
   STRIPE_KEY: process.env.STRIPE_KEY,
   SUBSCRIPTION_PRICE: process.env.SUBSCRIPTION_PRICE,
   BOT_USER: process.env.BOT_USER,
-  BOT_ADMINS: process.env.BOT_ADMINS?.split(',')
+  BOT_ADMINS: process.env.BOT_ADMINS?.split(','),
+  HOT_RECHARGE_EMAIL: process.env.HOT_RECHARGE_EMAIL,
+  HOT_RECHARGE_PW:  process.env.HOT_RECHARGE_PW
   
 };
 
