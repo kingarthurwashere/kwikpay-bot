@@ -13,6 +13,8 @@ const Transaction = new Schema( {
     paymentPlatform: { type: String },
     targetedPhone: {type: String},
     fname: {type: String},
+    customerName: {type: String},
+    customerAddress:{type: String},
     meterNumber:{type: String},
     paymentStatus: {type: String, enum: ['pending','completed','cancelled','failed']},
     paymentReference: {type: String},

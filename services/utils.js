@@ -82,11 +82,11 @@ async function isValidPhone(phone){
 
 async function isValidMeter(message){
   const customer = await checkZesaCustomer(message)
-  if(customer && customer.Customer){
+  if(customer && customer.CustomerInfo){
     return {
        meter:customer.Meter,
-      customerName:customer.CustomerInfo.CustomerName,
-      address:customer.CustomerInfo.Address
+      customerName:String(customer.CustomerInfo.CustomerName).split('\n')[0],
+      address:String(customer.CustomerInfo.CustomerName).split('\n')[1]
     }
   } else{
     return null

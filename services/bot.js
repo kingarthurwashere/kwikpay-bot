@@ -103,12 +103,14 @@ bot.on('message', async (msg) => {
         }
       }
       else if (transaction.transactionType == 'zesa') {
-        const customer = await utilService.isValidMeter(msg.text);
+       
         if (!transaction.meterNumber) {
+          const customer = await utilService.isValidMeter(msg.text);
           if (customer == null) {
             bot.sendMessage(chatId, `The entered meter number ${msg.text} is invalid, Please double check and enter again:`, { reply_markup: { force_reply: true } })
           } else {
-            transaction = await transactionService.update(transaction._id, {meterNumber:msg.text})
+            transaction = await transactionService.update(transaction._id, {meterNumber:msg.text,
+              customerName: customer.customerName,customerAddress: customer.address})
             bot.sendMessage(chatId, `Please Enter the phone number to send the Token: (example: 0782******)`, { reply_markup: { force_reply: true } })
           }
         } else if (!transaction.targetedPhone) {
@@ -119,9 +121,9 @@ bot.on('message', async (msg) => {
             transaction = transactionService.update(transaction._id, {targetedPhone: msg.text})
             bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em> <b>1GDB = ZWD${exchangeRate.rate} </b>\n\n
             <b>The following are your transaction details: </b>\n`
-              + `<em>Meter Number:</em> ${customer.meter} \n`
-              + `<em>Customer Name:</em> ${customer.customerName} \n`
-              + `<em>Adress:</em> ${customer.address}\n`
+              + `<em>Meter Number:</em> ${transaction.meterNumber} \n`
+              + `<em>Customer Name:</em> ${transaction.customerName} \n`
+              + `<em>Adress:</em> ${transaction.customerAddress}\n`
               + `By clicking the <b>PAY</b> button you confirm that the details are correct, if not please click <b>CANCEL</b>`,
               payOptions
             )
@@ -152,7 +154,7 @@ bot.on("callback_query", async (msg) => {
       bot.sendMessage(chatId, `GBP -ZWD Rate is not set, if you are an admin please set it, else contact your admin to set the rate.`)
     }else{
     await transactionService.create(transData);
-    bot.sendMessage(chatId, `Please enter the phone you want to recharge (example: 0778******):`, { reply_markup: { force_reply: true } })
+    bot.sendMessage(chatId, `<b>Please enter the phone you want to recharge (example: 0778******):</b>`, { reply_markup: { force_reply: true },parse_mode:'HTML' })
     }
   } else if (data == "zesa") {
     
@@ -161,7 +163,7 @@ bot.on("callback_query", async (msg) => {
     }else{
     transData.transactionType = 'zesa';
     await transactionService.create(transData);
-    bot.sendMessage(chatId, `Please enter the zesa meter number you want to recharge:`, { reply_markup: { force_reply: true } })
+    bot.sendMessage(chatId, `<b>Please enter the zesa meter number you want to recharge:</b>`,{ reply_markup: { force_reply: true },parse_mode:'HTML'})
     }
   } else if(data =='addRate'){
     bot.sendMessage(chatId, `Currently we only support conversion to <b>ZWD</b>, Please select the currency you want to convert from:`,currencies)
