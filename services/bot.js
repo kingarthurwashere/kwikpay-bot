@@ -92,7 +92,7 @@ bot.on('message', async (msg) => {
           } else {
             transaction = await transactionService.update(transaction._id, {targetedPhone:msg.text })
             
-           await bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em>\n <b>1GDB = ZWD${exchangeRate.rate} </b>`
+           await bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em>\n <b>1GBP = ZWD${exchangeRate.rate} </b>`
            +`\n<em>You are about to buy airtime for </em>: \n <b>${msg.text}</b>`
           +`\nBy clicking the <b>PAY</b> button you confirm that the details are correct, if not please click <b>CANCEL</b>`
           ,payOptions) 
@@ -118,8 +118,8 @@ bot.on('message', async (msg) => {
           if (!isValidPhone) {
             bot.sendMessage(chatId, `The entered phone number "${msg.text}" is invalid. Zimbabwe phone numbers beging with "07" and have 10 digits:`, { reply_markup: { force_reply: true } })
           } else {
-            transaction = transactionService.update(transaction._id, {targetedPhone: msg.text})
-            bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em> <b>1GDB = ZWD${exchangeRate.rate} </b>\n\n
+            transaction = await transactionService.update(transaction._id, {targetedPhone: msg.text})
+            bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em> <b>1GPB = ZWD${exchangeRate.rate} </b>\n\n
             <b>The following are your transaction details: </b>\n`
               + `<em>Meter Number:</em> ${transaction.meterNumber} \n`
               + `<em>Customer Name:</em> ${transaction.customerName} \n`
