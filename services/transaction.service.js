@@ -3,15 +3,6 @@ const Transaction = require('../models/transaction.model');
 
 // Create Transaction
 async function create(transactionParam){
-    // Validate
-    const duplicate = await Transaction.findOne({ chatId: transactionParam.chatId });
-    if (duplicate) {
-        return { 
-            status: 409,
-            message: 'Transaction  already Exists'
-         };
-    }
-   
 
     let transaction = new Transaction(transactionParam);
     
