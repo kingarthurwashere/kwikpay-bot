@@ -123,11 +123,11 @@ exports.processPendingTransactions = async () => {
     if (transactions && transactions.length > 0) {
         for (trans of transactions) {
             if (trans.transactionType == 'airtime') {
-                let customerSMS = `Your account has been credited with ${trans.amount} of airtime from KwikPay HotRecharge`
+                let customerSMS = `Your account has been credited with <b>USD</b>${trans.amount} of airtime from KwikPay HotRecharge`
                 const response = await utils.processAirtime(trans.amount, trans.targetedPhone, customerSMS)
                 if (response != null) {
                     let message = `Dear ${trans.fname}, <b>${trans.targetedPhone}</b> has 
-                been successfully credited with ${trans.amount} of airtime.`
+                been successfully credited with <b>USD</b>${trans.amount} of airtime.`
                     await transactionService.update(trans._id, {
                         transactionStatus: 'completed', endTime: new Date()
                         , transactionReference: response.AgentReference

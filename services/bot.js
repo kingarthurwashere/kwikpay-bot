@@ -145,12 +145,9 @@ bot.on("callback_query", async (msg) => {
     transactionStatus: 'pending',
     startTime: new Date(),
   }
-  const exchangeRate = await currencyRateService.findByCurrencyFrom('GBP');
+  const exchangeRate = await currencyRateService.findByCurrencyFrom('USD');
   if (data == "airtime") {
 
-    if (!exchangeRate) {
-      bot.sendMessage(chatId, `GBP -ZWD Rate is not set, if you are an admin please set it, else contact your admin to set the rate.`)
-    } else {
       let pendingTransaction = await transactionService.findTransactionsPendingCompletion(chatId);
       if (pendingTransaction) {
         bot.sendMessage(chatId, `<em>You have a pending <b>${pendingTransaction.transactionType}</b> transaction, do you want to continue processing or cancel it?</em>`,
@@ -159,11 +156,10 @@ bot.on("callback_query", async (msg) => {
         await transactionService.create(transData);
         bot.sendMessage(chatId, `<b>Please enter the phone you want to recharge (example: 0778******):</b>`, { reply_markup: { force_reply: true }, parse_mode: 'HTML' })
       }
-    }
   } else if (data == "zesa") {
 
     if (!exchangeRate) {
-      bot.sendMessage(chatId, `GBP -ZWD Rate is not set, if you are an admin please set it, else contact your admin to set the rate.`)
+      bot.sendMessage(chatId, `USD -ZWD Rate is not set, if you are an admin please set it, else contact your admin to set the rate.`)
     } else {
       transData.transactionType = 'zesa';
       let pendingTransaction = await transactionService.findTransactionsPendingCompletion(chatId);
