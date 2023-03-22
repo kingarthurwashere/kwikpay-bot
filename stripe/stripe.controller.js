@@ -19,14 +19,13 @@ exports.success = async (req, res) => {
     const transaction = req.query.transaction
     const chatId = req.query.chat_id
     const rate = await rateService.findByCurrencyFrom(String(currency).toUpperCase());
-    //AMOUNT IN RTGS
-    const convertedAmount = rate * amount
+    
     if (session && session.payment_status == 'paid') {
 
         await bot.sendMessage(chatId, success_message, { parse_mode: "HTML" })
         let savedTransaction = await transactionService.update(transaction, {
             paymentStatus: 'completed', amount: amount,
-            paymentCurrency: String(currency).toLowerCase(), rateOnCosavedTransactionnversion: rate, convertedAmount: convertedAmount,
+            paymentCurrency: String(currency).toLowerCase(),
             transactionStatus: 'processing',
             paymentReference: reference,
             fname: req.query.fname
@@ -34,11 +33,11 @@ exports.success = async (req, res) => {
         if (savedTransaction) {
             if (req.query.service) {
                 if (req.query.service == 'airtime') {
-                    let customerSMS = `Your account has been credited with ${convertedAmount} of airtime from KwikPay HotRecharge`
-                    const response = await utils.processAirtime(convertedAmount, savedTransaction.targetedPhone, customerSMS)
+                    let customerSMS = `Your account has been credited with ${amount} of airtime from KwikPay HotRecharge`
+                    const response = await utils.processAirtime(amount, savedTransaction.targetedPhone, customerSMS)
                     if (response != null) {
                         let message = `Dear ${req.query.fname}, <b>${savedTransaction.targetedPhone}</b> has 
-                    been successfully credited with ${convertedAmount} of airtime.`
+                    been successfully credited with <b>USD</b>${amount} of airtime.`
                         await transactionService.update(savedTransaction._id, {
                             transactionStatus: 'completed', endTime: new Date()
                             , transactionReference: response.AgentReference
@@ -46,29 +45,32 @@ exports.success = async (req, res) => {
                         await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
                     } else {
                         let message = `Dear ${req.query.fname}, we recieved your payment
-                    of ${convertedAmount} and we will notify you as soon as we credit ${savedTransaction.targetedPhone}.`
+                    of ${amount} and we will notify you as soon as we credit ${savedTransaction.targetedPhone}.`
                         await transactionService.update(savedTransaction._id, { transactionStatus: 'pending' })
                         await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
                     }
                 } else {
                     //HOT RACHARGE ZESA
-                    const response = await utils.processZesaPayment(convertedsavedTransactionAmount, savedTransaction.meterNumber, savedTransaction.targetedPhone);
+                    //AMOUNT IN RTGS
+                    const convertedAmount = rate * amount
+                    const response = await utils.processZesaPayment(savedTransaction.meterNumber,convertedAmount, savedTransaction.targetedPhone);
                     if (response != null) {
                         let reference = response.reference
                         let message = `Dear <em>${req.query.fname}</> Your ZESA Transaction has been successful. The following are the details:
                 \n Meter Number: ${response.meter}
-                \n Amount : ${response.amount},
+                \n Amount :  <b>ZWL</b>${response.amount},
                 \n Name: ${response.name},
                 \n Address: ${response.address},
                 \n Token: ${response.token},
                 \n Units: ${response.units},
-                \n Net Amount: ${response.netamount},
+                \n Net Amount:  <b>ZWL</b>${response.netamount},
                 \n Levy: ${response.levy},
                 \n Arrears: ${response.arrears},
                 \n Tax: ${response.reference},
                 \n Reference: ${reference}
                 `
-                        await transactionService.update(savedTransaction._id, { transactionStatus: 'completed', transactionReference: reference, endTime: new Date() })
+                        await transactionService.update(savedTransaction._id, { transactionStatus: 'completed', transactionReference: reference,
+                        convertedAmount: convertedAmount,rateOnConversion: rate, endTime: new Date() })
                         await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
                     } else {
                         let message = `Dear ${req.query.fname}, we recieved your payment
