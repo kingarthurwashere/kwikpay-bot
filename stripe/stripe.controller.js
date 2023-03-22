@@ -123,11 +123,11 @@ exports.processPendingTransactions = async () => {
     if (transactions && transactions.length > 0) {
         for (trans of transactions) {
             if (trans.transactionType == 'airtime') {
-                let customerSMS = `Your account has been credited with ${trans.convertedAmount} of airtime from KwikPay HotRecharge`
-                const response = await utils.processAirtime(convertedAmount, savedTransaction.targetedPhone, customerSMS)
+                let customerSMS = `Your account has been credited with ${trans.amount} of airtime from KwikPay HotRecharge`
+                const response = await utils.processAirtime(trans.amount, trans.targetedPhone, customerSMS)
                 if (response != null) {
                     let message = `Dear ${trans.fname}, <b>${trans.targetedPhone}</b> has 
-                been successfully credited with ${trans.convertedAmount} of airtime.`
+                been successfully credited with ${trans.amount} of airtime.`
                     await transactionService.update(trans._id, {
                         transactionStatus: 'completed', endTime: new Date()
                         , transactionReference: response.AgentReference
@@ -141,12 +141,12 @@ exports.processPendingTransactions = async () => {
                     let reference = response.reference
                     let message = `Dear <em>${trans.fname}</> Your ZESA Transaction has been successful. The following are the details:
                 \n Meter Number: ${response.meter}
-                \n Amount : ${response.amount},
+                \n Amount : <b>ZWL</b>${response.amount},
                 \n Name: ${response.name},
                 \n Address: ${response.address},
                 \n Token: ${response.token},
                 \n Units: ${response.units},
-                \n Net Amount: ${response.netamount},
+                \n Net Amount: <b>ZWL</b>${response.netamount},
                 \n Levy: ${response.levy},
                 \n Arrears: ${response.arrears},
                 \n Tax: ${response.reference},

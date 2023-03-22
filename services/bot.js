@@ -224,8 +224,8 @@ bot.on("callback_query", async (msg) => {
       if (!transaction.targetedPhone) {
         bot.sendMessage(chatId, `<b>Please enter the phone you want to recharge (example: 0778******):</b>`, { reply_markup: { force_reply: true }, parse_mode: 'HTML' })
       } else {
-        await bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em>\n <b>1GBP = ZWD${exchangeRate.rate} </b>`
-          + `\n<em>You are about to buy airtime for </em>: \n <b>${transaction.targetedPhone}</b>`
+        await bot.sendMessage(chatId, `<em>You are about to buy airtime for </em>: `
+        +`\n <b>${transaction.targetedPhone}</b>`
           + `\nBy clicking the <b>PAY</b> button you confirm that the details are correct, if not please click <b>CANCEL</b>`
           , payOptions)
       }
@@ -236,7 +236,7 @@ bot.on("callback_query", async (msg) => {
       } else if (!transaction.targetedPhone) {
         bot.sendMessage(chatId, `Please Enter the phone number to send the Token: (example: 0782******)`, { reply_markup: { force_reply: true } })
       } else {
-        bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em> \n<b>1GPB = ZWD${exchangeRate.rate} </b>
+        bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em> \n<b>1USD = ZWL${exchangeRate.rate} </b>
             \n<b>The following are your transaction details: </b>`
           + `\n<em>Meter Number:</em> ${transaction.meterNumber}`
           + `\n<em>Customer Name:</em> ${transaction.customerName}`
