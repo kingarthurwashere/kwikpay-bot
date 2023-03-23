@@ -266,13 +266,13 @@ bot.on("callback_query", async (msg) => {
   }
 })
 
-async function processPayment(chatId, fname, transactionId) {
+async function processPayment(chatId, fname, transactionId,service) {
 
   bot.sendMessage(chatId, `Dear <em>${fname}</em> A payment link is being generated below, please click the link and proceed to make your payment!`, {
     parse_mode: 'HTML'
   })
     .then(async (msg) => {
-      const paymentURL = await stripeService.checkout(chatId, fname, transactionId);
+      const paymentURL = await stripeService.checkout(chatId, fname, transactionId,service);
       if (paymentURL && paymentURL != 'null') {
         await bot.sendMessage(chatId, paymentURL);
       } else {
