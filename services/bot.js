@@ -73,16 +73,14 @@ bot.on('message', async (msg) => {
           } else {
             transaction = await transactionService.update(transaction._id, { targetedPhone: msg.text })
 
-            await bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em>\n <b>1USD = ZWD${exchangeRate.rate} </b>`
-              + `\n<em>You are about to buy airtime for </em>: \n <b>${msg.text}</b>`
+            await bot.sendMessage(chatId,`<em>You are about to buy airtime for </em>: \n <b>${msg.text}</b>`
               + `\nBy clicking the <b>PAY</b> button you confirm that the details are correct, if not please click <b>CANCEL</b>`
               , payOptions)
 
           }
         } else {
        
-          await bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS :</em>\n <b>1USD = ZWD${exchangeRate.rate} </b>`
-          + `\n<em>You are about to buy airtime for </em>: \n <b>${msg.text}</b>`
+          await bot.sendMessage(chatId,`<em>You are about to buy airtime for </em>: \n <b>${msg.text}</b>`
           + `\nBy clicking the <b>PAY</b> button you confirm that the details are correct, if not please click <b>CANCEL</b>`
           , payOptions)
         }

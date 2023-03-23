@@ -15,6 +15,7 @@ mongoose.connect(config.mongo.url, ).then(r =>{
 routes.register(app)
 // Update Pending Transactions
 cronServices.updateAfterEveryFiveMinutes();
+cronServices.updateTest();
 // Listening to port
 app.listen(3000,async () => {
   console.log("Bot is running .....")

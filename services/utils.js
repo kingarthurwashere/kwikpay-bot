@@ -58,8 +58,9 @@ async function processZesaPayment (meterNumber, amount, mobileNumber) {
 async function processAirtime (amount, targetMobile, CustomerSMS)
 {
   const response = await hotrecharge.pinlessRecharge(
-    targetMobile,
     amount,
+    targetMobile,
+    '',
     CustomerSMS,
     Currency.USD
   );
