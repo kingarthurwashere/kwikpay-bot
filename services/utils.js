@@ -1,4 +1,4 @@
-const { HotRecharge } = require("hotrecharge");
+const { HotRecharge, Currency } = require("hotrecharge");
 const config = require('../config');
 
 const hotrecharge = new HotRecharge({
@@ -60,7 +60,8 @@ async function processAirtime (amount, targetMobile, CustomerSMS)
   const response = await hotrecharge.pinlessRecharge(
     targetMobile,
     amount,
-    CustomerSMS
+    CustomerSMS,
+    Currency.USD
   );
   if ( response.ReplyCode == 2 )
   {

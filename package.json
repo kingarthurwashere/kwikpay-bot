@@ -13,7 +13,7 @@
     "axios": "^1.3.2",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "hotrecharge": "^2.0.0",
+    "hotrecharge": "^2.0.1",
     "mongodb": "^5.0.1",
     "mongoose": "^6.9.1",
     "node-cron": "^3.0.2",

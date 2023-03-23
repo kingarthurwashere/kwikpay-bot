@@ -33,7 +33,7 @@ exports.success = async (req, res) => {
         if (savedTransaction) {
             if (req.query.service) {
                 if (req.query.service == 'airtime') {
-                    let customerSMS = `Your account has been credited with ${amount} of airtime from KwikPay HotRecharge`
+                    let customerSMS = `Your account has been credited with USD${amount} of airtime from KwikPay HotRecharge`
                     const response = await utils.processAirtime(amount, savedTransaction.targetedPhone, customerSMS)
                     if (response != null) {
                         let message = `Dear ${req.query.fname}, <b>${savedTransaction.targetedPhone}</b> has 
