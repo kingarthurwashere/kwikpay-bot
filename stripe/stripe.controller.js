@@ -52,7 +52,7 @@ exports.success = async (req, res) => {
                 } else {
                     //HOT RACHARGE ZESA
                     //AMOUNT IN RTGS
-                    const convertedAmount = rate * amount
+                    const convertedAmount = rate?rate.rate * amount:amount
                     const response = await utils.processZesaPayment(savedTransaction.meterNumber,convertedAmount, savedTransaction.targetedPhone);
                     if (response != null) {
                         let reference = response.reference
@@ -70,7 +70,7 @@ exports.success = async (req, res) => {
                 \n Reference: ${reference}
                 `
                         await transactionService.update(savedTransaction._id, { transactionStatus: 'completed', transactionReference: reference,
-                        convertedAmount: convertedAmount,rateOnConversion: rate, endTime: new Date() })
+                        convertedAmount: convertedAmount,rateOnConversion: rate?rate.rate:1, endTime: new Date() })
                         await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
                     } else {
                         let message = `Dear ${req.query.fname}, we recieved your payment
