@@ -1,6 +1,7 @@
-const { Pesepay } = require( 'pesepay' )
-const config = require('../config');
-const pesepay = new Pesepay( config.INTEGRATION_KEY, config.ENCRYPTION_KEY );
+const pesepay = require('pesepay');
+const config = require( '../config' );
+const pesepay = pesepay(config.INTEGRATION_KEY, config.ENCRYPTION_KEY);
+
 
 async function checkout(chatId,user,transaction_id,service) {
   

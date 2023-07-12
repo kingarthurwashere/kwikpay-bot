@@ -1,5 +1,6 @@
 const config = require('../config')
-const pesepay = new Pesepay( config.INTEGRATION_KEY, config.ENCRYPTION_KEY );
+const pesepay = require('pesepay');
+//const pesepay = pesepay(config.INTEGRATION_KEY, config.ENCRYPTION_KEY);
 const TelegramBot = require('node-telegram-bot-api');
 const bot = new TelegramBot(config.token, { polling: false });
 const utils = require('../services/utils');
