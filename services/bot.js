@@ -221,7 +221,7 @@ bot.on("callback_query", async (msg) => {
         await bot.sendMessage(chatId, `<em>You are about to buy airtime for </em>: `
         +`\n <b>${transaction.targetedPhone}</b>`
           + `\nBy clicking the <b>PAY</b> button you confirm that the details are correct, if not please click <b>CANCEL</b>`
-          , payOptions)
+          , paymentOptions, payOptions)
       }
     } else {
       //ZESA TRANSACTION
@@ -236,12 +236,19 @@ bot.on("callback_query", async (msg) => {
           + `\n<em>Customer Name:</em> ${transaction.customerName}`
           + `\n<em>Adress:</em> ${transaction.customerAddress}\n`
           + `\nBy clicking the <b>PAY</b> button you confirm that the details are correct, if not please click <b>CANCEL</b>`,
+          paymentOptions,
           payOptions
         )
       }
 
     }
   }
+    if (data === 'stripe') {
+    bot.sendMessage(chatId, 'You chose Option 1.');
+  } else if (data === 'pesepay') {
+    bot.sendMessage(chatId, 'You chose Option 2.');
+  }
+    
   else if (data == 'cancelTransaction') {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
     await transactionService.update(transaction._id, { paymentStatus: 'cancelled', transactionStatus: 'cancelled', endTime: new Date() })
@@ -340,6 +347,7 @@ async function updateCurrencyRate(currency, chatId) {
       })
   }
 }
+// Callbacks functions listed
 const payOptions = {
   reply_markup: {
     inline_keyboard: [
@@ -429,7 +437,26 @@ let entryOptions = {
     remove_keyboard: true
   }
 };
-
+// Payment Options code
+const paymentOptions = {
+      reply_markup: {
+    inline_keyboard: [
+      [
+        {
+          text: 'Stripe',
+          callback_data: 'stripe'
+        }
+      ],
+      [
+        {
+          text: 'Local/Pesepay',
+          callback_data: 'pesepay'
+        }
+      ]
+    ],
+    remove_keyboard: true
+  }
+};
 
 /** Exports */
 module.exports = bot;
