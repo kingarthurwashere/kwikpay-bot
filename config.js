@@ -12,7 +12,10 @@ let config = {
   BOT_USER: process.env.BOT_USER,
   BOT_ADMINS: process.env.BOT_ADMINS?.split(','),
   HOT_RECHARGE_EMAIL: process.env.HOT_RECHARGE_EMAIL,
-  HOT_RECHARGE_PW:  process.env.HOT_RECHARGE_PW
+  HOT_RECHARGE_PW: process.env.HOT_RECHARGE_PW,
+  INTEGRATION_KEY: process.env.INTEGRATION_KEY,
+  ENCRYPTION_KEY: process.env.ENCRYPTION_KEY
+  
   
 };
 
