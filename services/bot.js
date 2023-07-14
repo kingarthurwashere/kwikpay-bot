@@ -444,6 +444,12 @@ let entryOptions = {
           text: 'ZESA',
           callback_data: 'zesa'
         }
+      ],
+      [
+        {
+          text: 'PAYMENT OPTIONS',
+          callback_data: 'paymentOptions'
+        }
       ]
     ],
     remove_keyboard: true
