@@ -3,7 +3,8 @@ const config = require('../config');
 const bot = new TelegramBot(config.token, { polling: true });
 const userService = require('../services/user.service');
 const transactionService = require('../services/transaction.service');
-const stripeService = require('../services/stripe.service')
+const stripeService = require( '../services/stripe.service' )
+const pesepayService =require('../services/pesepay.service')
 const currencyRateService = require('../services/currency_rate.service')
 const utilService = require('../services/utils')
 //Bot commands
@@ -13,32 +14,32 @@ bot.on('message', async (msg) => {
   const fname = msg.from.first_name;
   const lname = msg.from.last_name;
   if (config.BOT_ADMINS && config.BOT_ADMINS.includes(msg.from.username)) {
-    entryOptions = {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: 'AIRTIME',
-              callback_data: 'airtime'
-            }
-          ],
-          [
-            {
-              text: 'ZESA',
-              callback_data: 'zesa'
-            }
-          ]
-          ,
-          [
-            {
-              text: 'ADMIN',
-              callback_data: 'admin'
-            }
-          ]
-        ],
-        remove_keyboard: true
-      }
-    }
+    // Update the entryOptions to include the payment option
+entryOptions = {
+  reply_markup: {
+    inline_keyboard: [
+      [
+        {
+          text: 'AIRTIME',
+          callback_data: 'airtime'
+        }
+      ],
+      [
+        {
+          text: 'ZESA',
+          callback_data: 'zesa'
+        }
+      ],
+      [
+        {
+          text: 'PAYMENT OPTIONS',
+          callback_data: 'paymentOptions'
+        }
+      ]
+    ],
+    remove_keyboard: true
+  }
+};
   }
 
   if (msg && (msg.text.toLowerCase().includes('\/start'))) {
@@ -137,7 +138,7 @@ bot.on("callback_query", async (msg) => {
   const fname = msg.from.first_name;
   let transData = {
     chatId: chatId,
-    paymentPlatform: 'stripe',
+    paymentPlatform: 'stripe, pesepay',
     transactionType: 'airtime',
     paymentStatus: 'pending',
     transactionStatus: 'pending',
@@ -221,7 +222,7 @@ bot.on("callback_query", async (msg) => {
         await bot.sendMessage(chatId, `<em>You are about to buy airtime for </em>: `
         +`\n <b>${transaction.targetedPhone}</b>`
           + `\nBy clicking the <b>PAY</b> button you confirm that the details are correct, if not please click <b>CANCEL</b>`
-          , paymentOptions, payOptions)
+          , payOptions)
       }
     } else {
       //ZESA TRANSACTION
@@ -236,18 +237,22 @@ bot.on("callback_query", async (msg) => {
           + `\n<em>Customer Name:</em> ${transaction.customerName}`
           + `\n<em>Adress:</em> ${transaction.customerAddress}\n`
           + `\nBy clicking the <b>PAY</b> button you confirm that the details are correct, if not please click <b>CANCEL</b>`,
-          paymentOptions,
           payOptions
         )
       }
 
     }
   }
-    if (data === 'stripe') {
-    bot.sendMessage(chatId, 'You chose Option 1.');
-  } else if (data === 'pesepay') {
-    bot.sendMessage(chatId, 'You chose Option 2.');
-  }
+ // Add a new else if block to handle the payment options callback
+else if (data == 'paymentOptions') {
+  bot.sendMessage(chatId, 'Please select a payment method:', paymentOptions);
+}   
+  // Handle the payment method selection callbacks
+else if (data === 'stripe') {
+  bot.sendMessage(chatId, 'You chose Stripe as the payment method.');
+} else if (data === 'paypal') {
+  bot.sendMessage(chatId, 'You chose Pesepay as the payment method.');
+}
     
   else if (data == 'cancelTransaction') {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
@@ -270,22 +275,29 @@ bot.on("callback_query", async (msg) => {
     }
   }
 })
-
-async function processPayment(chatId, fname, transactionId,service) {
-
-  bot.sendMessage(chatId, `Dear <em>${fname}</em> A payment link is being generated below, please click the link and proceed to make your payment!`, {
+ 
+// Payment link generated here for both payments
+async function processPayment(chatId, fname, transactionId, service) {
+  bot.sendMessage(chatId, `Dear <em>${fname}</em>, payment links are being generated below. Please select the appropriate link and proceed to make your payment!`, {
     parse_mode: 'HTML'
   })
     .then(async (msg) => {
-      const paymentURL = await stripeService.checkout(chatId, fname, transactionId,service);
-      if (paymentURL && paymentURL != 'null') {
+      let paymentURL;
+      if (service === 'stripe') {
+        paymentURL = await stripeService.checkout(chatId, fname, transactionId, service);
+      } else if (service === 'pesepay') {
+        // Generate payment URL for another payment service
+        paymentURL = await pesepayService.checkout(chatId, fname, transactionId);
+      }
+      
+      if (paymentURL && paymentURL !== 'null') {
         await bot.sendMessage(chatId, paymentURL);
       } else {
-        await bot.sendMessage(chatId, "An error occurred wilest generating the payment url.Please try again later"
-          , { parse_mode: 'HTML' });
+        await bot.sendMessage(chatId, "An error occurred while generating the payment URL. Please try again later.", { parse_mode: 'HTML' });
       }
-    })
+    });
 }
+
 async function addCurrency(currency, chatId) {
   let rate = await currencyRateService.findByCurrencyFrom(currency);
   if (rate) {
@@ -437,9 +449,9 @@ let entryOptions = {
     remove_keyboard: true
   }
 };
-// Payment Options code
+// Define the paymentOptions object
 const paymentOptions = {
-      reply_markup: {
+  reply_markup: {
     inline_keyboard: [
       [
         {
@@ -449,7 +461,7 @@ const paymentOptions = {
       ],
       [
         {
-          text: 'Local/Pesepay',
+          text: 'Pesepay/local',
           callback_data: 'pesepay'
         }
       ]
