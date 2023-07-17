@@ -1,9 +1,9 @@
 const config = require('../config');
 const axios = require('axios');
 
-async function checkout(chatId, user, transaction_id, service, amount, currency) {
-  const successUrl = `${config.redirect_url}/success?fname=${user}&chat_id=${chatId}&transaction=${transaction_id}&service=${service}`;
-  const failerUrl = `${config.redirect_url}/failure?fname=${user}&chat_id=${chatId}&transaction=${transaction_id}&service=${service}`;
+async function checkout(chatId, fname, transactionId, service, amount, currency) {
+  const successUrl = `${config.redirect_url}/success?fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
+  const failureUrl = `${config.redirect_url}/failure?fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
 
   try {
     const response = await axios.post('https://pesepay.com/api/v1/payment', {
@@ -11,15 +11,16 @@ async function checkout(chatId, user, transaction_id, service, amount, currency)
       currency: currency,
       description: 'Payment for a product',
       success_url: successUrl,
-      cancel_url: failerUrl,
+      cancel_url: failureUrl,
     });
 
     const paymentUrl = response.data.paymentUrl;
-    return paymentUrl || null;
+    return paymentUrl;
   } catch (error) {
-    console.error('Error creating Pesepay payment:', error);
+    console.error('Error generating Pesepay payment URL:', error);
     return null;
   }
 }
 
 module.exports = { checkout };
+

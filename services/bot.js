@@ -39,7 +39,7 @@ bot.on('message', async (msg) => {
         ],
         remove_keyboard: true
       }
-    }
+    };
   }
 
   if (msg && (msg.text.toLowerCase().includes('/start'))) {
@@ -230,6 +230,34 @@ bot.on("callback_query", async (msg) => {
     }
   } else if (data === 'cancelTransaction') {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
+    await transactionService.update(transaction._id, { paymentStatus: 'cancelled', transactionStatus: 'cancelled', endTime: new Date() });
+  } else if (data === 'pay') { // Updated: Handle Pay button click
+    let transaction = await transactionService.findTransactionsPendingCompletion(chatId); // Added this line
+    if (transaction.transactionType === 'airtime') {
+      if (!transaction.targetedPhone) {
+        bot.sendMessage(chatId, `<b>Please enter the phone you want to recharge (example: 0778******):</b>`, { reply_markup: { force_reply: true }, parse_mode: 'HTML' });
+      } else {
+        await bot.sendMessage(chatId, `<em>You are about to buy airtime for:</em> `
+          + `\n<b>${transaction.targetedPhone}</b>`
+          + `\nPlease select a payment method:`, paymentMethods);
+      }
+    } else {
+      // ZESA TRANSACTION
+      if (!transaction.meterNumber) {
+        bot.sendMessage(chatId, `<b>Please enter the zesa meter number you want to recharge:</b>`, { reply_markup: { force_reply: true }, parse_mode: 'HTML' });
+      } else if (!transaction.targetedPhone) {
+        bot.sendMessage(chatId, `Please enter the phone number to send the Token: (example: 0782******)`, { reply_markup: { force_reply: true } });
+      } else {
+        bot.sendMessage(chatId, ` <em>TODAY's EXCHANGE RATE IS:</em> \n<b>1USD = ZWL${exchangeRate.rate}</b>`
+          + `\n<b>The following are your transaction details:</b>`
+          + `\n<em>Meter Number:</em> ${transaction.meterNumber}`
+          + `\n<em>Customer Name:</em> ${transaction.customerName}`
+          + `\n<em>Address:</em> ${transaction.customerAddress}\n`
+          + `Please select a payment method:`, paymentMethods);
+      }
+    }
+  } else if (data === 'cancel') { // Updated: Handle Cancel button click
+    let transaction = await transactionService.findTransactionsPendingCompletion(chatId); // Added this line
     await transactionService.update(transaction._id, { paymentStatus: 'cancelled', transactionStatus: 'cancelled', endTime: new Date() });
   } else if (data === 'stripePayment') { // New: Handle Stripe payment option
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId); // Added this line
