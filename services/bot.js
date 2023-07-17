@@ -14,6 +14,7 @@ bot.on('message', async (msg) => {
   const fname = msg.from.first_name;
   const lname = msg.from.last_name;
 
+  let entryOptions = null;
   if (config.BOT_ADMINS && config.BOT_ADMINS.includes(msg.from.username)) {
     entryOptions = {
       reply_markup: {
@@ -45,9 +46,7 @@ bot.on('message', async (msg) => {
   if (msg && (msg.text.toLowerCase().includes('/start'))) {
     // SAVE NEW USER IN DBASE
     let user = await userService.findByChatId(chatId);
-    if (user) {
-      // USER EXISTS, DO NOTHING
-    } else {
+    if (!user) {
       user = {
         firstName: fname,
         surName: lname,
@@ -259,30 +258,30 @@ bot.on("callback_query", async (msg) => {
   } else if (data === 'cancel') { // Updated: Handle Cancel button click
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId); // Added this line
     await transactionService.update(transaction._id, { paymentStatus: 'cancelled', transactionStatus: 'cancelled', endTime: new Date() });
-  } else if (data === 'stripePayment') { // New: Handle Stripe payment option
-    let transaction = await transactionService.findTransactionsPendingCompletion(chatId); // Added this line
-    transData.paymentPlatform.push('stripe'); // Add 'stripe' to the paymentPlatform array
-    await processPayment(chatId, fname, transaction._id, transaction.transactionType === 'airtime' ? 'airtime' : 'zesa token', transData);
-  } else if (data === 'pesepayPayment') { // New: Handle Pesepay payment option
-    let transaction = await transactionService.findTransactionsPendingCompletion(chatId); // Added this line
-    transData.paymentPlatform.push('pesepay'); // Add 'pesepay' to the paymentPlatform array
-    await processPayment(chatId, fname, transaction._id, transaction.transactionType === 'airtime' ? 'airtime' : 'zesa token', transData);
+  } else if (data === 'stripePayment') {
+    let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
+    transData.paymentPlatform.push('stripe');
+    await processPayment(chatId, fname, transaction._id, transaction.transactionType === 'airtime' ? 'airtime' : 'zesa token', transaction.amount, transData); // Pass 'amount' to the processPayment function
+  } else if (data === 'pesepayPayment') {
+    let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
+    transData.paymentPlatform.push('pesepay');
+    await processPayment(chatId, fname, transaction._id, transaction.transactionType === 'airtime' ? 'airtime' : 'zesa token', transaction.amount, transData); // Pass 'amount' to the processPayment function
   } else {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
     // ...
   }
 });
 
-async function processPayment(chatId, fname, transactionId, service, transData) {
+async function processPayment(chatId, fname, transactionId, service, amount, transData) {
   bot.sendMessage(chatId, `Dear <em>${fname}</em>, a payment link is being generated below. Please click the link and proceed to make your payment!`, { parse_mode: 'HTML' })
     .then(async (msg) => {
       let paymentURLs = [];
       for (const platform of transData.paymentPlatform) {
         let paymentURL;
         if (platform === 'stripe') {
-          paymentURL = await stripeService.checkout(chatId, fname, transactionId);
+          paymentURL = await stripeService.checkout(chatId, fname, transactionId, amount); // Fixed: Pass 'amount' to the checkout function
         } else if (platform === 'pesepay') {
-          paymentURL = await pesepayService.checkout(chatId, fname, transactionId); // Generate Pesepay payment URL
+          paymentURL = await pesepayService.checkout(chatId, fname, transactionId, amount); // Fixed: Pass 'amount' to the checkout function
         }
         if (paymentURL && paymentURL !== 'null') {
           paymentURLs.push(paymentURL);
@@ -301,31 +300,17 @@ async function processPayment(chatId, fname, transactionId, service, transData) 
 }
 
 async function addCurrency(currency, chatId) {
-  let rate = await currencyRateService.findByCurrencyFrom(currency);
-  if (rate) {
-    await bot.sendMessage(chatId, `<b>${currency} - ZWD</b> Rate already exists. Please update the rate if necessary.`, { parse_mode: 'HTML' });
-  } else {
-    await currencyRateService.create({ currencyFrom: currency, rate: 0 });
-    await bot.sendMessage(chatId, `<b>${currency} - ZWD</b> Rate added successfully. Please set the rate:`, { parse_mode: 'HTML' });
-  }
+  bot.sendMessage(chatId, `<b>Please enter the current exchange rate for 1 USD to ${currency}:</b>`, { reply_markup: { force_reply: true }, parse_mode: 'HTML' });
 }
 
 async function updateCurrencyRate(currency, chatId) {
-  const rate = await currencyRateService.findByCurrencyFrom(currency);
-  if (rate) {
-    await transactionService.create({
-      transactionType: `updateRate:${currency}`,
-      paymentStatus: 'pending',
-      transactionStatus: 'pending',
-      startTime: new Date(),
-      chatId: chatId
-    });
-    await bot.sendMessage(chatId, `<b>Please enter the updated ${currency} - ZWD rate:</b>`, { parse_mode: 'HTML' });
+  const exchangeRate = await currencyRateService.findByCurrencyFrom(currency);
+  if (!exchangeRate) {
+    bot.sendMessage(chatId, `No exchange rate found for ${currency}. Please add it first.`);
   } else {
-    await bot.sendMessage(chatId, `Rate for ${currency} - ZWD does not exist. Please add the rate first.`, { parse_mode: 'HTML' });
+    bot.sendMessage(chatId, `<b>Please enter the updated exchange rate for 1 USD to ${currency}:</b>`, { reply_markup: { force_reply: true }, parse_mode: 'HTML' });
   }
 }
-
 
 const payOptions = {
   reply_markup: {
@@ -407,7 +392,7 @@ const paymentMethods = { // New: Payment methods selection
       ],
       [
         {
-          text: 'Pesepay',
+          text: 'PesePay',
           callback_data: 'pesepayPayment'
         }
       ]
@@ -417,25 +402,4 @@ const paymentMethods = { // New: Payment methods selection
   parse_mode: 'HTML'
 };
 
-let entryOptions = {
-  reply_markup: {
-    inline_keyboard: [
-      [
-        {
-          text: 'AIRTIME',
-          callback_data: 'airtime'
-        }
-      ],
-      [
-        {
-          text: 'ZESA',
-          callback_data: 'zesa'
-        }
-      ]
-    ],
-    remove_keyboard: true
-  }
-};
-
-/** Exports */
 module.exports = bot;

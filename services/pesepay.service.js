@@ -23,4 +23,3 @@ async function checkout(chatId, fname, transactionId, service, amount, currency)
 }
 
 module.exports = { checkout };
-
