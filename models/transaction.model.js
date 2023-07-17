@@ -10,7 +10,10 @@ const Transaction = new Schema( {
     convertedAmount: {type: Number},
     rateOnConversion: {type: Number},
     transactionType:{type: String,enum: ['airtime','zesa']},
-    paymentPlatform: { type: String },
+    paymentPlatform: {
+    type: [String],  // Changed data type to Array of Strings
+    default: '',    // Set default value as an empty array
+  },
     targetedPhone: {type: String},
     fname: {type: String},
     customerName: {type: String},
