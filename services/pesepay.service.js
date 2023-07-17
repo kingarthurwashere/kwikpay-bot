@@ -15,7 +15,7 @@ async function checkout(chatId, fname, transactionId, service, amount, currency)
 
   try {
     // Create a Pesepay session
-    const session = await pesepay.createSession({
+    const session = await pesepay.checkout.session.create({
       amount: amount,
       currency: currency,
       description: 'Payment for a product',
