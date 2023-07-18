@@ -6,6 +6,23 @@ const bot = new TelegramBot(config.token, { polling: false });
 const utils = require('../services/utils');
 const transactionService = require('../services/transaction.service');
 const rateService = require('../services/currency_rate.service');
+const pesepayService = require('../services/pesepay.service')
+
+// For Controller testing Pesepay API
+exports.pay = async ( req, res ) =>
+{
+
+try {
+  const result =  pesepayService.checkout( '123', 'john doe', 'acs123', 10, 'USD' )
+  return  res.json(result)
+} catch (error) {
+   return res.status(500).json(error) 
+}
+
+    
+}
+
+
 
 exports.success = async (req, res) => {
 
