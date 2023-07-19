@@ -25,7 +25,7 @@ const Transaction = new Schema( {
     transactionStatus: {type: String, enum: ['pending','completed','cancelled','processing','failed']},
     startTime: {type: Date},
     endTime: {type: Date},
-    paymentMethod: {type: String, enum: ['pese','stripe']}
+    paymentMethod: {type: String, enum: ['pesepay','stripe']}
 });
 
 module.exports = mongoose.model("transaction",Transaction);
