@@ -62,7 +62,6 @@ bot.on('message', async (msg) => {
   } else {
 
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
-    const exchangeRate = await currencyRateService.findByCurrencyFrom('USD');
     if (transaction) {
       if (transaction.transactionType == 'airtime') {
         if (!transaction.targetedPhone) {
@@ -75,8 +74,9 @@ bot.on('message', async (msg) => {
             await confirmPayment(transaction,chatId);
           }
         } else if (!transaction.paymentMethod) {
-          await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`
+          await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`,{ parse_mode: 'HTML' }
             , paymentMethods)
+            await confirmPayment(transaction,chatId);
         }
         else {
           await confirmPayment(transaction,chatId);
@@ -102,12 +102,12 @@ bot.on('message', async (msg) => {
           }
           else if (!transaction.paymentMethod) {
             transaction = await transactionService.update(transaction._id, { targetedPhone: msg.text })
-            await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`
+            await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`,{ parse_mode: 'HTML' }
               , paymentMethods)
           }
         }
         else if (!transaction.paymentMethod) {
-          await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`
+          await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`,{ parse_mode: 'HTML' }
             , paymentMethods)
         }
         else {
@@ -183,11 +183,12 @@ bot.on("callback_query", async (msg) => {
   else if (data == 'stripePayment') {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
     await transactionService.update(transaction._id, { paymentMethod: 'stripe' })
+    await confirmPayment(transaction,chatId);
   }
   else if (date == 'pesepayPayment') {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
     await transactionService.update(transaction._id, { paymentMethod: 'pese' })
-
+    await confirmPayment(transaction,chatId);
   }
   else if (data == 'admin') {
     //USER IS AN ADMINISTRATOR
