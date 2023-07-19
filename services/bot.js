@@ -277,7 +277,7 @@ async function processPayment(chatId, fname, transactionId, service, paymentMeth
       }
     } else if (paymentMethod === 'pesepay') {
       // Call PesePay checkout function
-      const pesepayURL = await pesepayService.checkout(chatId, fname, transactionId, service, amount, currency);
+      const pesepayURL = await pesepayService.checkout(chatId, fname, transactionId, service);
       if (pesepayURL) {
         await bot.sendMessage(chatId, pesepayURL);
       } else {

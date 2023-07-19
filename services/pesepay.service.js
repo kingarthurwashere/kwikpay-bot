@@ -5,7 +5,7 @@ const config = require('../config');
 //const pesepayInstance = new pesepay.Pesepay( config.INTEGRATION_KEY, config.ENCRYPTION_KEY );
 const pesepayInstance = new pesepay.Pesepay( '95140383-7a1e-4477-99e9-298480babb3c', '1d93bd646d024d2dad38509f72ca34ae' );
 
-async function checkout(chatId, fname, transactionId, service, amount, currency) {
+async function checkout(chatId, fname, transactionId, service) {
   const successUrl = `${config.redirect_url}/success?fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
   const failureUrl = `${config.redirect_url}/failure?fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
 
@@ -18,8 +18,6 @@ async function checkout(chatId, fname, transactionId, service, amount, currency)
     const transaction = pesepayInstance.createTransaction(
       config.APP_ID,
       config.APP_CODE,
-      amount,
-      currency,
       'Payment for a product'
     );
 
