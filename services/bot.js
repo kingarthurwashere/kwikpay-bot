@@ -185,9 +185,9 @@ bot.on("callback_query", async (msg) => {
     await transactionService.update(transaction._id, { paymentMethod: 'stripe' })
     await confirmPayment(transaction,chatId);
   }
-  else if (date == 'pesepayPayment') {
+  else if (data == 'pesepayPayment') {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
-    await transactionService.update(transaction._id, { paymentMethod: 'pese' })
+    await transactionService.update(transaction._id, { paymentMethod: 'pesepay' })
     await confirmPayment(transaction,chatId);
   }
   else if (data == 'admin') {
@@ -274,7 +274,8 @@ async function processPayment(chatId, fname, transactionId, service,paymentMetho
       bot.sendMessage(chatId, `Dear <em>${fname}</em> Pese Pay Is coming soon!!`, {
         parse_mode: 'HTML'
       })
-      // CALL YOUR PESE PAY PAYMENT METHOD HERE
+        // CALL YOUR PESE PAY PAYMENT METHOD HERE
+        
 
     }
     })
