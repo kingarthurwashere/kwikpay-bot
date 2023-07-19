@@ -3,7 +3,9 @@ const config = require('../config');
 const bot = new TelegramBot(config.token, { polling: true });
 const userService = require('../services/user.service');
 const transactionService = require('../services/transaction.service');
-const stripeService = require('../services/stripe.service')
+const stripeService = require( '../services/stripe.service' )
+const pesepay = require('pesepay')
+const pesepayService = require('../services/pesepay.service')
 const currencyRateService = require('../services/currency_rate.service')
 const utilService = require('../services/utils')
 //Bot commands
@@ -256,30 +258,40 @@ bot.on("callback_query", async (msg) => {
   }
 })
 
-async function processPayment(chatId, fname, transactionId, service,paymentMethod) {
-
-  bot.sendMessage(chatId, `Dear <em>${fname}</em> A payment link is being generated below, please click the link and proceed to make your payment!`, {
-    parse_mode: 'HTML'
-  })
-    .then(async (msg) => {
-      if(paymentMethod =='stripe'){
+async function processPayment(chatId, fname, transactionId, service, paymentMethod) {
+  bot.sendMessage(
+    chatId,
+    `Dear <em>${fname}</em> A payment link is being generated below, please click the link and proceed to make your payment!`,
+    { parse_mode: 'HTML' }
+  ).then(async (msg) => {
+    if (paymentMethod === 'stripe') {
       const paymentURL = await stripeService.checkout(chatId, fname, transactionId, service);
-      if (paymentURL && paymentURL != 'null') {
+      if (paymentURL && paymentURL !== 'null') {
         await bot.sendMessage(chatId, paymentURL);
       } else {
-        await bot.sendMessage(chatId, "An error occurred wilest generating the payment url.Please try again later"
-          , { parse_mode: 'HTML' });
+        await bot.sendMessage(
+          chatId,
+          "An error occurred while generating the payment URL. Please try again later.",
+          { parse_mode: 'HTML' }
+        );
       }
-    }else{
-      bot.sendMessage(chatId, `Dear <em>${fname}</em> Pese Pay Is coming soon!!`, {
-        parse_mode: 'HTML'
-      })
-        // CALL YOUR PESE PAY PAYMENT METHOD HERE
-        
-
+    } else if (paymentMethod === 'pesepay') {
+      // Call PesePay checkout function
+      const pesepayURL = await pesepayService.checkout(chatId, fname, transactionId, service, amount, currency);
+      if (pesepayURL) {
+        await bot.sendMessage(chatId, pesepayURL);
+      } else {
+        await bot.sendMessage(
+          chatId,
+          "An error occurred while generating the PesePay payment URL. Please try again later.",
+          { parse_mode: 'HTML' }
+        );
+      }
     }
-    })
+  });
 }
+
+
 async function addCurrency(currency, chatId) {
   let rate = await currencyRateService.findByCurrencyFrom(currency);
   if (rate) {
