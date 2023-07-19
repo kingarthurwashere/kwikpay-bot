@@ -24,7 +24,8 @@ const Transaction = new Schema( {
     transactionReference: {type: String},
     transactionStatus: {type: String, enum: ['pending','completed','cancelled','processing','failed']},
     startTime: {type: Date},
-    endTime: {type: Date}
-} );
+    endTime: {type: Date},
+    paymentMethod: {type: String, enum: ['pese','stripe']}
+});
 
 module.exports = mongoose.model("transaction",Transaction);
