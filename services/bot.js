@@ -271,7 +271,9 @@ async function processPayment(chatId, fname, transactionId, service,paymentMetho
           , { parse_mode: 'HTML' });
       }
     }else{
-   
+      bot.sendMessage(chatId, `Dear <em>${fname}</em> Pese Pay Is coming soon!!`, {
+        parse_mode: 'HTML'
+      })
       // CALL YOUR PESE PAY PAYMENT METHOD HERE
 
     }
