@@ -73,12 +73,12 @@ bot.on('message', async (msg) => {
             bot.sendMessage(chatId, `Invalid phone number "${msg.text}".(Zimbabwe phone numbers beging with "07" and have 10 digits)Please enter correct phone number to proceed:`)
           } else {
             transaction = await transactionService.update(transaction._id, { targetedPhone: msg.text })
-            await confirmPayment(transaction,chatId);
+            await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`
+            , paymentMethods)
           }
         } else if (!transaction.paymentMethod) {
-          await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`,{ parse_mode: 'HTML' }
+          await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`
             , paymentMethods)
-            await confirmPayment(transaction,chatId);
         }
         else {
           await confirmPayment(transaction,chatId);
@@ -104,12 +104,12 @@ bot.on('message', async (msg) => {
           }
           else if (!transaction.paymentMethod) {
             transaction = await transactionService.update(transaction._id, { targetedPhone: msg.text })
-            await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`,{ parse_mode: 'HTML' }
+            await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`
               , paymentMethods)
           }
         }
         else if (!transaction.paymentMethod) {
-          await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`,{ parse_mode: 'HTML' }
+          await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`
             , paymentMethods)
         }
         else {
@@ -480,6 +480,7 @@ const paymentMethods = { // New: Payment methods selection
     ],
     remove_keyboard: true
   },
+  parse_mode: 'HTML'
 }
 
 
