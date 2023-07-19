@@ -14,7 +14,9 @@ let config = {
   HOT_RECHARGE_EMAIL: process.env.HOT_RECHARGE_EMAIL,
   HOT_RECHARGE_PW: process.env.HOT_RECHARGE_PW,
   INTEGRATION_KEY: process.env.INTEGRATION_KEY,
-  ENCRYPTION_KEY: process.env.ENCRYPTION_KEY
+  ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+  APP_ID: process.env.APP_ID,
+  APP_CODE: process.env.APP_CODE
   
   
 };
