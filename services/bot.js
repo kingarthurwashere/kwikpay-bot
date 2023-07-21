@@ -278,12 +278,19 @@ async function processPayment(chatId, fname, transactionId, service,paymentMetho
         await bot.sendMessage(chatId, "An error occurred wilest generating the payment url.Please try again later"
           , { parse_mode: 'HTML' });
       }
-    }else{
-      bot.sendMessage(chatId, `Dear <em>${fname}</em> Pese Pay Is coming soon!!`, {
-        parse_mode: 'HTML'
-      })
-      // CALL YOUR PESE PAY PAYMENT METHOD HERE
-
+    } else if (paymentMethod === 'pesepay') {
+      // Call your Pesepay checkout function here
+      
+      const redirectUrl = await pesepayService.checkout(chatId, fname, transactionId, service);
+      if (redirectUrl) {
+        await bot.sendMessage(chatId, `Please click the link to proceed with the Pesepay payment: ${redirectUrl}`);
+      } else {
+        await bot.sendMessage(chatId, "An error occurred while generating the Pesepay payment URL. Please try again later", {
+          parse_mode: 'HTML'
+        });
+      }
+   
+        
     }
     })
 }

@@ -16,8 +16,7 @@ async function checkout(chatId, fname, transactionId, service) {
   try {
     // Step 1: Create a transaction
     const transaction = pesepayInstance.createTransaction(
-      config.APP_ID,
-      config.APP_CODE,
+      'USD',
       'Payment for a product'
     );
 
