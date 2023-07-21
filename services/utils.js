@@ -1,5 +1,6 @@
 const { HotRecharge, Currency } = require("hotrecharge");
 const config = require('../config');
+const { response } = require("express");
 
 const hotrecharge = new HotRecharge({
   email: config.HOT_RECHARGE_EMAIL,
@@ -14,22 +15,24 @@ async function checkZesaCustomer(meterNumber) {
 
     return await hotrecharge.enquireZesaCustomer(meterNumber);
   } catch (error) {
-    console.error( "Error in checkZesaCustomer:", error );
+    console.error("Error in checkZesaCustomer:", error);
     showNetworkError();
     throw error;
   }
 }
 
 async function processZesaPayment(meterNumber, amount, mobileNumber) {
-  try {
-    const response = await hotrecharge.rechargeZesa(amount, mobileNumber, meterNumber);
 
+  return new Promise((resolve) => {  
+    hotrecharge.rechargeZesa(amount, mobileNumber, meterNumber)
+    .then((response)=>{
+     
     if (response.ReplyCode === 2) {
       // Successful recharge logic here
       const { Token, Units, NetAmount, Levy, Arrears, TaxAmount, ZesaReference } = response.Tokens[0];
       const { Amount, Meter, AccountName, Address } = response;
 
-      return {
+      resolve( {
         amount: Amount,
         meter: Meter,
         name: AccountName,
@@ -41,34 +44,38 @@ async function processZesaPayment(meterNumber, amount, mobileNumber) {
         arrears: Arrears,
         tax: TaxAmount,
         reference: ZesaReference
-      };
+      })
     } else {
-      console.log(response);
-      return null;
+     
+      resolve(null);
     }
-  } catch (error) {
-    console.error( "Error in processZesaPayment:", error );
-    showNetworkError();
-    throw error;
-  }
+    }).catch ((error)=> {
+      resolve({
+        error: true,
+        errorType: String(error.response.data.Message)
+      })
+  })
+})
 }
 
 async function processAirtime(amount, targetMobile, CustomerSMS) {
-  try {
-    const response = await hotrecharge.pinlessRecharge(amount, targetMobile, '', CustomerSMS, Currency.USD);
-
-    if (response.ReplyCode === 2) {
-      // Successful recharge logic here
-      const { ReplyMsg, AgentReference } = response;
-      return ReplyMsg;
-    } else {
-      return null;
-    }
-  } catch (error) {
-    console.error( "Error in processAirtime:", error );
-    showNetworkError();
-    throw error;
-  }
+  return new Promise((resolve) => {
+    hotrecharge.pinlessRecharge(amount, targetMobile, '', CustomerSMS, Currency.USD)
+    .then((response)=>{
+      if (response.ReplyCode === 2) {
+        // Successful recharge logic here
+        const { ReplyMsg, AgentReference } = response;
+        resolve (ReplyMsg);
+      } else {
+        resolve(null);
+      }
+    }).catch((error) => {
+        resolve({
+          error: true,
+          errorType: String(error.response.data.Message)
+        })
+      })
+    })
 }
 
 async function isValidPhone(phone) {
@@ -80,23 +87,24 @@ async function isValidPhone(phone) {
 }
 
 async function isValidMeter(message) {
-  try {
-    const customer = await checkZesaCustomer(message);
 
-    if (customer && customer.CustomerInfo) {
-      return {
-        meter: customer.Meter,
-        customerName: String(customer.CustomerInfo.CustomerName).split('\n')[0],
-        address: String(customer.CustomerInfo.CustomerName).split('\n')[1]
-      };
-    } else {
-      return null;
-    }
-  } catch (error) {
-    console.error( "Error in isValidMeter:", error );
-    showNetworkError();
-    throw error;
-  }
+  return new Promise((resolve) => {
+    checkZesaCustomer(message)
+      .then((customer) => {
+        resolve({
+          meter: customer.Meter,
+          customerName: String(customer.CustomerInfo.CustomerName).split('\n')[0],
+          address: String(customer.CustomerInfo.CustomerName).split('\n')[1]
+        })
+      }).catch((error) => {
+        resolve({
+          error: true,
+          errorType: String(error.response.data.Message)
+            .toLocaleLowerCase()
+            .includes("invalid") ? "invalid" : "network"
+        })
+      })
+  })
 }
 
 // networkError

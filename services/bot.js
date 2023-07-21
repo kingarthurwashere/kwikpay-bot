@@ -72,22 +72,28 @@ bot.on('message', async (msg) => {
           } else {
             transaction = await transactionService.update(transaction._id, { targetedPhone: msg.text })
             await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`
-            , paymentMethods)
+              , paymentMethods)
           }
         } else if (!transaction.paymentMethod) {
           await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`
             , paymentMethods)
         }
         else {
-          await confirmPayment(transaction,chatId);
+          await confirmPayment(transaction, chatId);
         }
       }
       else if (transaction.transactionType == 'zesa') {
 
         if (!transaction.meterNumber) {
           const customer = await utilService.isValidMeter(msg.text);
-          if (customer == null) {
-            bot.sendMessage(chatId, `The entered meter number ${msg.text} is invalid, Please double check and enter again:`, { reply_markup: { force_reply: true } })
+
+          if (customer == null || customer.error) {
+            if (customer && customer.error && customer.errorType === 'invalid') {
+              bot.sendMessage(chatId, `The entered meter number ${msg.text} is invalid, Please double check and enter again:`, { reply_markup: { force_reply: true } })
+            } else {
+              bot.sendMessage(chatId, `A Network Challenge Was Encountered During Meter Number Validation, Please Try Again Later:`)
+
+            }
           } else {
             transaction = await transactionService.update(transaction._id, {
               meterNumber: msg.text,
@@ -111,7 +117,7 @@ bot.on('message', async (msg) => {
             , paymentMethods)
         }
         else {
-          await confirmPayment(transaction,chatId);
+          await confirmPayment(transaction, chatId);
         }
 
       }
@@ -183,12 +189,12 @@ bot.on("callback_query", async (msg) => {
   else if (data == 'stripePayment') {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
     await transactionService.update(transaction._id, { paymentMethod: 'stripe' })
-    await confirmPayment(transaction,chatId);
+    await confirmPayment(transaction, chatId);
   }
   else if (date == 'pesepayPayment') {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
     await transactionService.update(transaction._id, { paymentMethod: 'pese' })
-    await confirmPayment(transaction,chatId);
+    await confirmPayment(transaction, chatId);
   }
   else if (data == 'admin') {
     //USER IS AN ADMINISTRATOR
@@ -220,7 +226,7 @@ bot.on("callback_query", async (msg) => {
       if (!transaction.targetedPhone) {
         bot.sendMessage(chatId, `<b>Please enter the phone you want to recharge (example: 0778******):</b>`, { reply_markup: { force_reply: true }, parse_mode: 'HTML' })
       } else {
-        await confirmPayment(transaction,chatId);
+        await confirmPayment(transaction, chatId);
       }
     } else {
       //ZESA TRANSACTION
@@ -229,7 +235,7 @@ bot.on("callback_query", async (msg) => {
       } else if (!transaction.targetedPhone) {
         bot.sendMessage(chatId, `Please Enter the phone number to send the Token: (example: 0782******)`, { reply_markup: { force_reply: true } })
       } else {
-       await confirmPayment(transaction,chatId);
+        await confirmPayment(transaction, chatId);
       }
 
     }
@@ -242,7 +248,7 @@ bot.on("callback_query", async (msg) => {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
 
     if (data == 'confirmPayment') {
-      await processPayment(chatId, fname, transaction._id, transaction.transactionType == 'airtime' ? 'airtime' : 'zesa token',transaction.paymentMethod)
+      await processPayment(chatId, fname, transaction._id, transaction.transactionType == 'airtime' ? 'airtime' : 'zesa token', transaction.paymentMethod)
     }
     else if (data == 'cancelPayment') {
       if (transaction.transactionType == 'airtime') {
@@ -256,27 +262,27 @@ bot.on("callback_query", async (msg) => {
   }
 })
 
-async function processPayment(chatId, fname, transactionId, service,paymentMethod) {
+async function processPayment(chatId, fname, transactionId, service, paymentMethod) {
 
   bot.sendMessage(chatId, `Dear <em>${fname}</em> A payment link is being generated below, please click the link and proceed to make your payment!`, {
     parse_mode: 'HTML'
   })
     .then(async (msg) => {
-      if(paymentMethod =='stripe'){
-      const paymentURL = await stripeService.checkout(chatId, fname, transactionId, service);
-      if (paymentURL && paymentURL != 'null') {
-        await bot.sendMessage(chatId, paymentURL);
+      if (paymentMethod == 'stripe') {
+        const paymentURL = await stripeService.checkout(chatId, fname, transactionId, service);
+        if (paymentURL && paymentURL != 'null') {
+          await bot.sendMessage(chatId, paymentURL);
+        } else {
+          await bot.sendMessage(chatId, "An error occurred wilest generating the payment url.Please try again later"
+            , { parse_mode: 'HTML' });
+        }
       } else {
-        await bot.sendMessage(chatId, "An error occurred wilest generating the payment url.Please try again later"
-          , { parse_mode: 'HTML' });
-      }
-    }else{
-      bot.sendMessage(chatId, `Dear <em>${fname}</em> Pese Pay Is coming soon!!`, {
-        parse_mode: 'HTML'
-      })
-      // CALL YOUR PESE PAY PAYMENT METHOD HERE
+        bot.sendMessage(chatId, `Dear <em>${fname}</em> Pese Pay Is coming soon!!`, {
+          parse_mode: 'HTML'
+        })
+        // CALL YOUR PESE PAY PAYMENT METHOD HERE
 
-    }
+      }
     })
 }
 async function addCurrency(currency, chatId) {
