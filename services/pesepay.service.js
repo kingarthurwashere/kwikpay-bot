@@ -3,8 +3,11 @@ const { Pesepay } = require('pesepay');
 const config = require( '../config' );
 
 // Replace the following variables with your actual values
-const integrationKey ='b32bae83-ea8a-4e4a-9b33-80851b1a5514';
-const encryptionKey = '6b2a34e90711448a88253ca906727335';
+const integrationKey =('b32bae83-ea8a-4e4a-9b33-80851b1a5514');
+const encryptionKey = ('6b2a34e90711448a88253ca906727335');
+//const integrationKey =(config.integrationKey);
+//const encryptionKey = (config.encryptionKey);
+
 
 // Create an instance of the Pesepay class using your integration key and encryption key
 //const pesepayInstance = new pesepay.Pesepay( config.INTEGRATION_KEY, config.ENCRYPTION_KEY );
@@ -22,8 +25,8 @@ async function checkout(chatId, fname, transactionId, service) {
   try {
     // Step 1: Create a transaction
     const transaction = pesepay.createTransaction(
-      '1',
-      'USD', // Change this to the desired currency code
+      '10',
+      'ZWL', // Change this to the desired currency code
       'Payment for a product' // Change this to the desired payment reason
     );
 

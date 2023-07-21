@@ -1,4 +1,4 @@
-const pesepay = require('pesepay');
+const { Pesepay } = require('pesepay');
 const config = require('../config');
 const transactionService = require('../services/transaction.service');
 const rateService = require('../services/currency_rate.service');
@@ -6,9 +6,14 @@ const utils = require('../services/utils');
 const TelegramBot = require('node-telegram-bot-api');
 const bot = new TelegramBot(config.token, { polling: false });
 
+//const integrationKey =(config.integrationKey);
+//const encryptionKey = (config.encryptionKey);
+const integrationKey =('b32bae83-ea8a-4e4a-9b33-80851b1a5514');
+const encryptionKey = ('6b2a34e90711448a88253ca906727335');
+
 // Create an instance of the Pesepay class using your integration key and encryption key
 //const pesepayInstance = new pesepay.Pesepay( config.INTEGRATION_KEY, config.ENCRYPTION_KEY );
-const pesepayInstance = new pesepay.Pesepay( 'b32bae83-ea8a-4e4a-9b33-80851b1a5514', '6b2a34e90711448a88253ca906727335' );
+const pesepay = new Pesepay( integrationKey, encryptionKey );
 
 // For Controller testing Pesepay API
 exports.pay = async (req, res) => {
@@ -26,7 +31,7 @@ exports.success = async (req, res) => {
 
   try {
     // Retrieve the session using session ID
-    const session = await pesepayInstance.getSession(req.query.session_id);
+    const session = await pesepay.getSession(req.query.session_id);
     
     // Access session properties
     const currency = session.currency;
@@ -128,7 +133,7 @@ exports.failure = async (req, res) => {
   const failure_message = `Dear <b><em>${req.query.fname}</em></b>, Your Payment Has Been Cancelled`;
   
   try {
-    const session = await pesepayInstance.getSession(req.query.session_id);
+    const session = await pesepay.getSession(req.query.session_id);
 
     if (session && session.customer) {
       const currency = session.currency;
