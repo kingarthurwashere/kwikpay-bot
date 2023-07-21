@@ -35,7 +35,7 @@ exports.success = async (req, res) => {
                 if (req.query.service == 'airtime') {
                     let customerSMS = `Your account has been credited with USD${amount} of airtime from KwikPay HotRecharge`
                     const response = await utils.processAirtime(amount, savedTransaction.targetedPhone, customerSMS)
-                    if (response != null) {
+                    if (response && !response.error) {
                         let message = `Dear ${req.query.fname}, <b>${savedTransaction.targetedPhone}</b> has 
                     been successfully credited with <b>USD</b>${amount} of airtime.`
                         await transactionService.update(savedTransaction._id, {
@@ -45,7 +45,8 @@ exports.success = async (req, res) => {
                         await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
                     } else {
                         let message = `Dear ${req.query.fname}, we recieved your payment
-                    of ${amount} and we will notify you as soon as we credit ${savedTransaction.targetedPhone}.`
+                    of ${amount} but we are facing challenges with the recharge platform.We will automatically recharge your account 
+                    and notify you as soon as we credit ${savedTransaction.targetedPhone}.`
                         await transactionService.update(savedTransaction._id, { transactionStatus: 'pending' })
                         await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
                     }
@@ -54,7 +55,7 @@ exports.success = async (req, res) => {
                     //AMOUNT IN RTGS
                     const convertedAmount = rate?rate.rate * amount:amount
                     const response = await utils.processZesaPayment(savedTransaction.meterNumber,convertedAmount, savedTransaction.targetedPhone);
-                    if (response != null) {
+                    if (response != null && !response.error) {
                         let reference = response.reference
                         let message = `Dear <em>${req.query.fname}</> Your ZESA Transaction has been successful. The following are the details:
                 \n Meter Number: ${response.meter}
@@ -73,10 +74,13 @@ exports.success = async (req, res) => {
                         convertedAmount: convertedAmount,rateOnConversion: rate?rate.rate:1, endTime: new Date() })
                         await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
                     } else {
+                        if(response.error){
                         let message = `Dear ${req.query.fname}, we recieved your payment
-                of ${convertedAmount} and we will notify you as soon as we credit your ZESA Account.`
+                of ${convertedAmount} but the ZESA Processing facility is not available at the moment.
+                \nWe will keep trying to automatically credit your account.`
                         await transactionService.update(savedTransaction._id, { transactionStatus: 'pending' })
                         await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
+                        }
                     }
                 }
             }
@@ -137,7 +141,7 @@ exports.processPendingTransactions = async () => {
 
             } else if (trans.transactionType == 'zesa') {
                 const response = await utils.processZesaPayment(trans.convertedAmount, trans.meterNumber, trans.targetedPhone);
-                if (response != null) {
+                if (response != null && !response.error) {
                     let reference = response.reference
                     let message = `Dear <em>${trans.fname}</> Your ZESA Transaction has been successful. The following are the details:
                 \n Meter Number: ${response.meter}
@@ -157,7 +161,7 @@ exports.processPendingTransactions = async () => {
                 }
 
             } else {
-                //DO NOTHING
+                //DO NOTHING BECAUSE THIS HAPPENS IN THE BACKGROUND
             }
 
         }
