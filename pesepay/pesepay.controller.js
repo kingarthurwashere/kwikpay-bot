@@ -15,16 +15,6 @@ const encryptionKey = ('6b2a34e90711448a88253ca906727335');
 //const pesepayInstance = new pesepay.Pesepay( config.INTEGRATION_KEY, config.ENCRYPTION_KEY );
 const pesepay = new Pesepay( integrationKey, encryptionKey );
 
-// For Controller testing Pesepay API
-exports.pay = async (req, res) => {
-  try {
-    const result = await pesepayService.checkout('123', 'john doe', 'acs123', 10, 'USD');
-    return res.json(result);
-  } catch (error) {
-    return res.status(500).json(error);
-  }
-};
-
 
 exports.success = async (req, res) => {
   const success_message = `Dear <b><em>${req.query.fname}</em></b>, Your Payment Has Been Received. Please wait while we transfer your ${req.query.service} to your account.`;
