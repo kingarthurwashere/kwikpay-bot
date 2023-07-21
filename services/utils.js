@@ -1,25 +1,10 @@
 const { HotRecharge, Currency } = require("hotrecharge");
 const config = require('../config');
-const { response } = require("express");
 
 const hotrecharge = new HotRecharge({
   email: config.HOT_RECHARGE_EMAIL,
   password: config.HOT_RECHARGE_PW,
 });
-
-async function checkZesaCustomer(meterNumber) {
-  try {
-    if (!meterNumber) {
-      throw new Error("Meter number is required.");
-    }
-
-    return await hotrecharge.enquireZesaCustomer(meterNumber);
-  } catch (error) {
-    console.error("Error in checkZesaCustomer:", error);
-    showNetworkError();
-    throw error;
-  }
-}
 
 async function processZesaPayment(meterNumber, amount, mobileNumber) {
 
@@ -89,13 +74,19 @@ async function isValidPhone(phone) {
 async function isValidMeter(message) {
 
   return new Promise((resolve) => {
-    checkZesaCustomer(message)
+    hotrecharge.enquireZesaCustomer(message)
       .then((customer) => {
+        if(customer.ReplyCode ===2){
         resolve({
           meter: customer.Meter,
           customerName: String(customer.CustomerInfo.CustomerName).split('\n')[0],
           address: String(customer.CustomerInfo.CustomerName).split('\n')[1]
         })
+      }else{
+        resolve({
+          msg: "Invalid Meter"
+        })
+      }
       }).catch((error) => {
         resolve({
           error: true,
@@ -107,10 +98,5 @@ async function isValidMeter(message) {
   })
 }
 
-// networkError
 
-async function showNetworkError() {
-  alert("Network error occurred. Please try again later.");
-}
-
-module.exports = { processAirtime, processZesaPayment, checkZesaCustomer, isValidPhone, isValidMeter, showNetworkError };
+module.exports = { processAirtime, processZesaPayment, isValidPhone, isValidMeter};

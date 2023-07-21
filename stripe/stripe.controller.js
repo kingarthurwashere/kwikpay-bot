@@ -74,13 +74,11 @@ exports.success = async (req, res) => {
                         convertedAmount: convertedAmount,rateOnConversion: rate?rate.rate:1, endTime: new Date() })
                         await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
                     } else {
-                        if(response.error){
                         let message = `Dear ${req.query.fname}, we recieved your payment
                 of ${convertedAmount} but the ZESA Processing facility is not available at the moment.
                 \nWe will keep trying to automatically credit your account.`
                         await transactionService.update(savedTransaction._id, { transactionStatus: 'pending' })
                         await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
-                        }
                     }
                 }
             }

@@ -88,9 +88,8 @@ bot.on('message', async (msg) => {
 
         if (!transaction.meterNumber) {
           const customer = await utilService.isValidMeter(msg.text);
-
-          if (customer == null || customer.error) {
-            if (customer && customer.error && customer.errorType === 'invalid') {
+          if (!customer|| customer.error || customer.msg) {
+            if (customer && (customer.error && customer.errorType === 'invalid' || customer.msg)) {
               bot.sendMessage(chatId, `The entered meter number ${msg.text} is invalid, Please double check and enter again:`, { reply_markup: { force_reply: true } })
             } else {
               bot.sendMessage(chatId, `A Network Challenge Was Encountered During Meter Number Validation, Please Try Again Later:`)
