@@ -8,7 +8,7 @@ const bot = new TelegramBot(config.token, { polling: false });
 
 // Create an instance of the Pesepay class using your integration key and encryption key
 //const pesepayInstance = new pesepay.Pesepay( config.INTEGRATION_KEY, config.ENCRYPTION_KEY );
-const pesepayInstance = new pesepay.Pesepay( '95140383-7a1e-4477-99e9-298480babb3c', '1d93bd646d024d2dad38509f72ca34ae' );
+const pesepayInstance = new pesepay.Pesepay( 'b32bae83-ea8a-4e4a-9b33-80851b1a5514', '6b2a34e90711448a88253ca906727335' );
 
 // For Controller testing Pesepay API
 exports.pay = async (req, res) => {

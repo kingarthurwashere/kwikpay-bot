@@ -195,7 +195,7 @@ bot.on("callback_query", async (msg) => {
   }
   else if (data == 'pesepayPayment') {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
-    await transactionService.update(transaction._id, { paymentMethod: 'pese' })
+    await transactionService.update(transaction._id, { paymentMethod: 'pesepay' })
     await confirmPayment(transaction,chatId);
   }
   else if (data == 'admin') {
