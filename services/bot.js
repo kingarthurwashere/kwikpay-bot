@@ -88,9 +88,14 @@ bot.on('message', async (msg) => {
       else if (transaction.transactionType == 'zesa') {
 
         if (!transaction.meterNumber) {
-          const customer = await utilService.isValidMeter(msg.text);
-          if (customer == null) {
+          const customer = await utilService.isValidMeter(msg.text)
+          if (customer == null || customer.error) {
+            if(customer && customer.error && customer.erroType==='invalid'){
             bot.sendMessage(chatId, `The entered meter number ${msg.text} is invalid, Please double check and enter again:`, { reply_markup: { force_reply: true } })
+            }else{
+              bot.sendMessage(chatId, `A Network Challenge Was Encountered During Meter Number Validation, Please Try Again Later:`)
+           
+            }
           } else {
             transaction = await transactionService.update(transaction._id, {
               meterNumber: msg.text,
@@ -244,7 +249,9 @@ bot.on("callback_query", async (msg) => {
   }
   else if (data == 'cancelTransaction') {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
+    if(transaction){
     await transactionService.update(transaction._id, { paymentStatus: 'cancelled', transactionStatus: 'cancelled', endTime: new Date() })
+    }
   }
   else {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);

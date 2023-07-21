@@ -1,5 +1,6 @@
 const { HotRecharge, Currency } = require("hotrecharge");
 const config = require('../config');
+const { error } = require("console");
 
 const hotrecharge = new HotRecharge({
 email: config.HOT_RECHARGE_EMAIL,
@@ -83,17 +84,25 @@ async function isValidPhone(phone){
 }
 
 async function isValidMeter(message){
-  const customer = await checkZesaCustomer(message)
-  if(customer && customer.CustomerInfo){
-    return {
-       meter:customer.Meter,
-      customerName:String(customer.CustomerInfo.CustomerName).split('\n')[0],
-      address:String(customer.CustomerInfo.CustomerName).split('\n')[1]
-    }
-  } else{
-    return null
-  }
 
+  return new Promise((resolve)=>{
+  checkZesaCustomer(message)
+  .then((customer)=>{
+    resolve({
+      meter:customer.Meter,
+     customerName:String(customer.CustomerInfo.CustomerName).split('\n')[0],
+     address:String(customer.CustomerInfo.CustomerName).split('\n')[1]
+   })
+   }).catch((error)=>{
+    resolve({error: true,
+      erroType: String(error.response.data.Message)
+      .toLocaleLowerCase()
+      .includes("invalid")?"invalid":"network"
+})
+})
+})
 }
+  
+
 
 module.exports = { processAirtime, processZesaPayment,checkZesaCustomer,isValidPhone,isValidMeter};
