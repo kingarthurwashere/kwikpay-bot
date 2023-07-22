@@ -6,6 +6,7 @@ const utils = require('../services/utils');
 const transactionService = require('../services/transaction.service');
 const rateService = require('../services/currency_rate.service');
 
+
 exports.success = async (req, res) => {
 
     const success_message = `Dear <b><em>${req.query.fname}</em></b> Your Payment Has Been Received.
@@ -96,6 +97,7 @@ exports.success = async (req, res) => {
     }
     res.redirect(`https://t.me/${config.BOT_USER}?chat_id=${chatId}`)
 };
+
 
 exports.failure = async (req, res) => {
     const failure_message = ` Dear <b><em>${req.query.fname}</em></b> Your Payment Has Been Cancelled`

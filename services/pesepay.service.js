@@ -15,8 +15,8 @@ const pesepay = new Pesepay(integrationKey, encryptionKey);
 //const pesepayInstance = new pesepay.Pesepay( 'b32bae83-ea8a-4e4a-9b33-80851b1a5514', '6b2a34e90711448a88253ca906727335' );
 
 async function checkout(chatId, fname, transactionId, service) {
-  const successUrl = `${config.redirect_url}/success?fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
-  const failureUrl = `${config.redirect_url}/failure?fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
+  const successUrl = `${config.redirect_url}/pesepay/success?fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
+  const failureUrl = `${config.redirect_url}/pesepay/failure?fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
 
   // Set the return and result URLs
   pesepay.resultUrl = failureUrl;
@@ -25,7 +25,7 @@ async function checkout(chatId, fname, transactionId, service) {
   try {
     // Step 1: Create a transaction
     const transaction = pesepay.createTransaction(
-      '10',
+      '1',
       'ZWL', // Change this to the desired currency code
       'Payment for a product' // Change this to the desired payment reason
     );
