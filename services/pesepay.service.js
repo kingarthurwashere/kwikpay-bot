@@ -1,5 +1,6 @@
 // Import the required modules
-const { Pesepay } = require('pesepay');
+const { Pesepay } = require( 'pesepay' );
+const Transaction = require('../models/transaction.model');
 const config = require('../config');
 
 // Replace the following variables with your actual values
@@ -31,25 +32,17 @@ async function checkout(chatId, fname, transactionId, service) {
     // Save the reference number (used to check the status of a transaction and make the payment)
     const referenceNumber = response.referenceNumber;
 
-    // Step 3: Poll for the transaction status (Optional, based on your use case)
-    const pollResponse = await pesepay.pollTransaction(response.pollUrl);
+    const newTransaction = new Transaction({
+      chatId: chatId,
+      amount: amount,
+      paymentCurrency: currencyCode,
+      paymentStatus: 'pending', // Assuming the initial status is 'pending'
+      paymentReference: referenceNumber,
+      transactionStatus: 'pending', // Assuming the initial status is 'pending'
+      paymentMethod: 'pesepay',
+    });
 
-    // Check if the poll was successful and the payment was made
-    if (pollResponse.success && pollResponse.paid) {
-      console.log('Payment was successful!');
-    } else {
-      console.log('Payment is still pending or not paid yet.');
-    }
-
-    // Step 4: Check the transaction status using referenceNumber
-    const checkPaymentResponse = await pesepay.checkPayment(referenceNumber);
-
-    // Check if the payment was successful
-    if (checkPaymentResponse.success && checkPaymentResponse.paid) {
-      console.log('Payment was successful!');
-    } else {
-      console.log('Payment is still pending or not paid yet.');
-    }
+    await newTransaction.save();
 
     return redirectUrl;
   } catch (error) {

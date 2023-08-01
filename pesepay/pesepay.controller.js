@@ -1,7 +1,9 @@
 const config = require('../config');
 const TelegramBot = require('node-telegram-bot-api');
 const bot = new TelegramBot(config.token, { polling: false });
-const utils = require('../services/utils');
+const utils = require( '../services/utils' );
+const mongoose = require('mongoose');
+const Transaction = require('../models/transaction.model');
 const transactionService = require('../services/transaction.service');
 const rateService = require('../services/currency_rate.service');
 const { Pesepay } = require('pesepay');
@@ -10,38 +12,60 @@ const encryptionKey = '6b2a34e90711448a88253ca906727335';
 
 const pesepay = new Pesepay(integrationKey, encryptionKey);
 
-exports.success = async (req, res) => {
-  // Extract the required data from the request query
-  const { fname, chat_id, service, transaction } = req.query;
-  const { amount } = req.query; // Make sure the 'amount' value is present in the query
-
-  const success_message = `Dear <b><em>${fname}</em></b> Your Payment Has Been Received.
-    Please wait while we transfer your ${service} to your account.`;
-
-  // Initialize the referenceNumber variable to store the reference number
-  let referenceNumber;
-
+exports.success = async (req, res, chat_id) => {
   try {
-    const response = await pesepay.checkPayment( req.query );
+    const { fname, service, transactionId } = req.query;
+    const { amount } = req.query;
+    const success_message = `Dear <b><em>${fname}</em></b> Your Payment Has Been Received. Please wait while we transfer your ${service} to your account.`;
+    const referenceNumber = req.query.referenceNumber;
+    console.log('referenceNumber:', referenceNumber);
+
+    if (!referenceNumber) {
+      console.log('Missing referenceNumber in the query.');
+      return res.status(400).json({ error: 'Missing referenceNumber in the query.' });
+    }
+
+    // Retrieve the saved transaction based on the provided `transactionId`
+    const savedTransaction = await Transaction.findOne({ _id: transactionId });
+
+    if (!savedTransaction) {
+      console.log('Transaction not found.');
+      return res.status(400).json({ error: 'Transaction not found.' });
+    }
+
+    // Access the `referenceNumber` from the retrieved transaction
+    const savedReferenceNumber = savedTransaction.paymentReference;
+
+    // Check if the saved reference number matches the provided reference number
+    if (savedReferenceNumber !== referenceNumber) {
+      console.log('Invalid transaction or payment reference mismatch');
+      return res.status(400).json({ error: 'Invalid transaction or payment reference mismatch.' });
+    }
+
+    const response = await pesepay.checkPayment(referenceNumber);
 
     // Check if the response exists and has the expected properties
-    if (response && response.success && response.payment_status === 'paid') {
+    if (response.success && response.paid) {
       await bot.sendMessage(chat_id, success_message, { parse_mode: 'HTML' });
+
       // Save the reference number from the response
-      referenceNumber = response.referenceNumber;
+      const paymentReference = response.referenceNumber;
 
-      const currency = response.currency;
+      //const currencyCode = response.currencyCode;
       const amountValue = response.amount;
+      const currencyCode = response.currencyCode;
 
-
-      let savedTransaction = await transactionService.update(transaction, {
-        paymentStatus: 'completed',
-        amount: amountValue,
-        paymentCurrency: String(currency).toLowerCase(),
-        transactionStatus: 'processing',
-        paymentReference: referenceNumber, // Use the referenceNumber here if needed
-        fname: fname,
-      });
+      let savedTransaction = await Transaction.findOneAndUpdate(
+        { paymentReference: referenceNumber },
+        {
+          paymentStatus: 'completed',
+          amount: amountValue,
+          paymentCurrency: currencyCode,
+          transactionStatus: 'processing',
+          fname: fname,
+        },
+        { new: true }
+      );
 
       if (savedTransaction) {
         if (service) {
@@ -51,21 +75,31 @@ exports.success = async (req, res) => {
 
             if (response !== null) {
               const message = `Dear ${fname}, <b>${savedTransaction.targetedPhone}</b> has been successfully credited with <b>USD</b>${amountValue} of airtime.`;
-              await transactionService.update(savedTransaction._id, {
-                transactionStatus: 'completed',
-                endTime: new Date(),
-                transactionReference: response.AgentReference
-              });
+              await Transaction.findOneAndUpdate(
+                { _id: savedTransaction._id },
+                {
+                  transactionStatus: 'completed',
+                  endTime: new Date(),
+                  transactionReference: response.AgentReference,
+                }
+              );
               await bot.sendMessage(chat_id, message, { parse_mode: 'HTML' });
             } else {
               const message = `Dear ${fname}, we received your payment of ${amountValue} and we will notify you as soon as we credit ${savedTransaction.targetedPhone}.`;
-              await transactionService.update(savedTransaction._id, { transactionStatus: 'pending' });
+              await Transaction.findOneAndUpdate(
+                { _id: savedTransaction._id },
+                { transactionStatus: 'pending' }
+              );
               await bot.sendMessage(chat_id, message, { parse_mode: 'HTML' });
             }
           } else if (service === 'zesa') {
             // HOT RECHARGE ZESA
             const convertedAmount = rate ? rate.rate * amountValue : amountValue;
-            const response = await utils.processZesaPayment(savedTransaction.meterNumber, convertedAmount, savedTransaction.targetedPhone);
+            const response = await utils.processZesaPayment(
+              savedTransaction.meterNumber,
+              convertedAmount,
+              savedTransaction.targetedPhone
+            );
 
             if (response !== null) {
               const reference = response.reference;
@@ -81,19 +115,25 @@ exports.success = async (req, res) => {
                 \n Arrears: ${response.arrears},
                 \n Tax: ${response.reference},
                 \n Reference: ${reference}`;
-              
-              await transactionService.update(savedTransaction._id, {
-                transactionStatus: 'completed',
-                transactionReference: reference,
-                convertedAmount: convertedAmount,
-                rateOnConversion: rate ? rate.rate : 1,
-                endTime: new Date()
-              });
+
+              await Transaction.findOneAndUpdate(
+                { _id: savedTransaction._id },
+                {
+                  transactionStatus: 'completed',
+                  transactionReference: reference,
+                  convertedAmount: convertedAmount,
+                  rateOnConversion: rate ? rate.rate : 1,
+                  endTime: new Date(),
+                }
+              );
 
               await bot.sendMessage(chat_id, message, { parse_mode: 'HTML' });
             } else {
               const message = `Dear ${fname}, we received your payment of ${convertedAmount} and we will notify you as soon as we credit your ZESA Account.`;
-              await transactionService.update(savedTransaction._id, { transactionStatus: 'pending' });
+              await Transaction.findOneAndUpdate(
+                { _id: savedTransaction._id },
+                { transactionStatus: 'pending' }
+              );
               await bot.sendMessage(chat_id, message, { parse_mode: 'HTML' });
             }
           }
@@ -103,13 +143,15 @@ exports.success = async (req, res) => {
       // Handle the case where the response is invalid or payment is not completed
       const failure_message = `Dear <b><em>${fname}</em></b> Your Payment Failed to Complete successfully`;
       await bot.sendMessage(chat_id, failure_message, { parse_mode: 'HTML' });
-      await transactionService.update(transaction, {
-        paymentStatus: 'failed',
-        amount: amountValue,
-        paymentCurrency: String(currency).toLowerCase(),
-        paymentReference: referenceNumber, // Use the referenceNumber here if needed
-        transactionStatus: 'failed',
-      });
+      await Transaction.findOneAndUpdate(
+        { paymentReference: referenceNumber },
+        {
+          paymentStatus: 'failed',
+          amount: amount,
+          //paymentCurrency: currencyCode.toLowerCase(),
+          transactionStatus: 'failed',
+        }
+      );
     }
   } catch (error) {
     // Handle any errors that occurred during the process
@@ -123,28 +165,27 @@ exports.success = async (req, res) => {
 
 exports.failure = async (req, res) => {
   const failure_message = `Dear <b><em>${req.query.fname}</em></b>, Your Payment Has Been Cancelled`;
-  
-  try {
-    const session = await pesepay.checkPayment(req.query);
 
-    if (session && session.customer) {
-      const currency = session.currency;
-      const amount = session.amount_total;
-      const reference = req.query;
-      const transaction = req.query.transaction;
+  try {
+    const referenceNumber = req.query.referenceNumber;
+    const response = await pesepay.checkPayment(referenceNumber);
+
+    if (response.success) {
+      const currency = response.currencyCode;
+      const amount = response.amount;
       const chatId = req.query.chat_id;
       const rate = await rateService.findByCurrencyFrom(currency.toUpperCase());
-      const convertedAmount = rate * amount;
+      const convertedAmount = rate ? rate.rate * amount : amount;
 
       await bot.sendMessage(chatId, failure_message, { parse_mode: 'HTML' });
-      await transactionService.update(transaction, {
+      await transactionService.update(response.transaction, {
         paymentStatus: 'cancelled',
         amount: amount,
         paymentCurrency: currency.toLowerCase(),
-        rateOnConversion: rate,
+        rateOnConversion: rate ? rate.rate : 1,
         convertedAmount: convertedAmount,
-        paymentReference: reference,
-        transactionStatus: 'cancelled'
+        paymentReference: referenceNumber,
+        transactionStatus: 'cancelled',
       });
 
       res.redirect(`https://t.me/${config.BOT_USER}?chat_id=${chatId}`);
@@ -171,7 +212,7 @@ exports.processPendingTransactions = async () => {
           await transactionService.update(trans._id, {
             transactionStatus: 'completed',
             endTime: new Date(),
-            transactionReference: response.AgentReference
+            transactionReference: response.AgentReference,
           });
           await bot.sendMessage(trans.chatId, message, { parse_mode: 'HTML' });
         }
@@ -192,7 +233,7 @@ exports.processPendingTransactions = async () => {
             \n Arrears: ${response.arrears},
             \n Tax: ${response.reference},
             \n Reference: ${reference}`;
-          
+
           await transactionService.update(trans._id, { transactionStatus: 'completed', transactionReference: reference, endTime: new Date() });
           await bot.sendMessage(trans.chatId, message, { parse_mode: 'HTML' });
         }

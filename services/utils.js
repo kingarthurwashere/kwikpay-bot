@@ -43,24 +43,23 @@ async function processZesaPayment(meterNumber, amount, mobileNumber) {
 })
 }
 
-async function processAirtime(amount, targetMobile, CustomerSMS) {
-  return new Promise((resolve) => {
-    hotrecharge.pinlessRecharge(amount, targetMobile, '', CustomerSMS, Currency.USD)
-    .then((response)=>{
-      if (response.ReplyCode === 2) {
-        // Successful recharge logic here
-        const { ReplyMsg, AgentReference } = response;
-        resolve (ReplyMsg);
-      } else {
-        resolve(null);
-      }
-    }).catch((error) => {
-        resolve({
-          error: true,
-          errorType: String(error.response.data.Message)
-        })
-      })
-    })
+async function processAirtime (amount, targetMobile, CustomerSMS)
+{
+  const response = await hotrecharge.pinlessRecharge(
+    amount,
+    targetMobile,
+    '',
+    CustomerSMS,
+    Currency.USD
+  );
+  if ( response.ReplyCode == 2 )
+  {
+    //recharge was successful and you can add your own business logic here
+    const { ReplyMsg,AgentReference } = response;
+    return ReplyMsg;
+  } else{
+    return null;
+  }
 }
 
 async function isValidPhone(phone) {
