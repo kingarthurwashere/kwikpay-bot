@@ -14,16 +14,17 @@ const pesepay = new Pesepay(integrationKey, encryptionKey);
 
 exports.success = async (req, res) => {
   try {
-    const { fname, chat_id, service, transactionId } = req.query;
+    const { fname, chat_id, service, transaction } = req.query;
     const { amount } = req.query;
-    console.log('fname:', fname);
+    console.log( 'fname:', fname );
+    console.log('chatId:', chat_id);
     console.log('service:', service);
-    console.log( 'transactionId:', transactionId );
+    console.log( 'transactionId:', transaction );
     
     const success_message = `Dear <b><em>${fname}</em></b> Your Payment Has Been Received. Please wait while we transfer your ${service} to your account.`;
 
     // Retrieve the saved transaction based on the provided `transactionId`
-    const savedTransaction = await Transaction.findOne({ _id: transactionId });
+    const savedTransaction = await Transaction.findOne({ _id: transaction });
 
     if (!savedTransaction) {
       console.log('Transaction not found.');
