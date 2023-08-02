@@ -56,8 +56,6 @@ exports.success = async (req, res) => {
 
       // Save the reference number from the response
       const paymentReference = response.referenceNumber;
-
-      //const currencyCode = response.currencyCode;
       const amountValue = response.amount;
       const currencyCode = response.currencyCode;
 
