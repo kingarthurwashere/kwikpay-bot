@@ -12,18 +12,15 @@ const encryptionKey = '6b2a34e90711448a88253ca906727335';
 
 const pesepay = new Pesepay(integrationKey, encryptionKey);
 
-exports.success = async (req, res, chat_id) => {
+exports.success = async (req, res) => {
   try {
-    const { fname, service, transactionId } = req.query;
+    const { fname, chat_id, service, transactionId } = req.query;
     const { amount } = req.query;
+    console.log('fname:', fname);
+    console.log('service:', service);
+    console.log( 'transactionId:', transactionId );
+    
     const success_message = `Dear <b><em>${fname}</em></b> Your Payment Has Been Received. Please wait while we transfer your ${service} to your account.`;
-    const referenceNumber = req.query.referenceNumber;
-    console.log('referenceNumber:', referenceNumber);
-
-    if (!referenceNumber) {
-      console.log('Missing referenceNumber in the query.');
-      return res.status(400).json({ error: 'Missing referenceNumber in the query.' });
-    }
 
     // Retrieve the saved transaction based on the provided `transactionId`
     const savedTransaction = await Transaction.findOne({ _id: transactionId });
@@ -37,10 +34,18 @@ exports.success = async (req, res, chat_id) => {
     const savedReferenceNumber = savedTransaction.paymentReference;
 
     // Check if the saved reference number matches the provided reference number
-    if (savedReferenceNumber !== referenceNumber) {
+    if (savedReferenceNumber) {
       console.log('Invalid transaction or payment reference mismatch');
       return res.status(400).json({ error: 'Invalid transaction or payment reference mismatch.' });
     }
+
+    // if (!referenceNumber) {
+    //   console.log('Missing referenceNumber in the query.');
+    //   return res.status(400).json({ error: 'Missing referenceNumber in the query.' });
+    // }
+
+    const referenceNumber = req.query.referenceNumber;
+    console.log('referenceNumber:', referenceNumber);
 
     const response = await pesepay.checkPayment(referenceNumber);
 
