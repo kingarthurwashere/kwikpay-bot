@@ -1,5 +1,5 @@
 // Import the required modules
-const { Pesepay } = require( 'pesepay' );
+const { Pesepay } = require('pesepay');
 const Transaction = require('../models/transaction.model');
 const config = require('../config');
 
@@ -13,14 +13,14 @@ const paymentReason = 'Test payment';
 const pesepay = new Pesepay(integrationKey, encryptionKey);
 
 async function checkout(chatId, fname, transactionId, service) {
-  const successUrl = `${config.redirect_url}/pesepay/success?fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
-  const failureUrl = `${config.redirect_url}/pesepay/failure?fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
-
-  // Set the return and result URLs
-  pesepay.resultUrl = failureUrl;
-  pesepay.returnUrl = successUrl;
-
   try {
+    const successUrl = `${config.redirect_url}/pesepay/success?reference_id={referenceNumber}&fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
+    const failureUrl = `${config.redirect_url}/pesepay/failure?reference_id={referenceNumber}&fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
+
+    // Set the return and result URLs
+    pesepay.resultUrl = failureUrl; // Set the result URL
+    pesepay.returnUrl = successUrl;
+
     // Step 1: Create a transaction
     const transaction = pesepay.createTransaction(amount, currencyCode, paymentReason);
 

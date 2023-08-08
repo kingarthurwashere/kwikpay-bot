@@ -10,164 +10,101 @@ const { Pesepay } = require('pesepay');
 const integrationKey = 'b32bae83-ea8a-4e4a-9b33-80851b1a5514';
 const encryptionKey = '6b2a34e90711448a88253ca906727335';
 
-const pesepay = new Pesepay(integrationKey, encryptionKey);
+const pesepay = new Pesepay( integrationKey, encryptionKey );
 
 exports.success = async (req, res) => {
-  try {
-    const { fname, chat_id, service, transaction } = req.query;
-    const { amount } = req.query;
-    console.log( 'fname:', fname );
-    console.log('chatId:', chat_id);
-    console.log('service:', service);
-    console.log( 'transactionId:', transaction );
+
+    const success_message = `Dear <b><em>${req.query.fname}</em></b> Your Payment Has Been Received.
+    Please wait whilest we transfer your ${req.query.service} to your account.`
+
+    const response = await pesepay.checkPayment(req.query.reference_id);
+    const currencyCode = response.currencyCode
+    //STRIPE BRINGS AMOUNT IN CENTS, SO CONVERT TO POUNDS BY DIVIDING WITH 100
+    const amount = response.amount_total
+    const referenceNumber = req.query.reference_id;
+    const transaction = req.query.transaction
+    const chatId = req.query.chat_id
+    const rate = await rateService.findByCurrencyFrom(String(currencyCode).toUpperCase());
     
-    const success_message = `Dear <b><em>${fname}</em></b> Your Payment Has Been Received. Please wait while we transfer your ${service} to your account.`;
-
-    // Retrieve the saved transaction based on the provided `transactionId`
-    const savedTransaction = await Transaction.findOne({ _id: transaction });
-
-    if (!savedTransaction) {
-      console.log('Transaction not found.');
-      return res.status(400).json({ error: 'Transaction not found.' });
-    }
-
-    // Access the `referenceNumber` from the retrieved transaction
-    const savedReferenceNumber = savedTransaction.paymentReference;
-
-    // Check if the saved reference number matches the provided reference number
-    if (savedReferenceNumber) {
-      console.log('Invalid transaction or payment reference mismatch');
-      return res.status(400).json({ error: 'Invalid transaction or payment reference mismatch.' });
-    }
-
-    // if (!referenceNumber) {
-    //   console.log('Missing referenceNumber in the query.');
-    //   return res.status(400).json({ error: 'Missing referenceNumber in the query.' });
-    // }
-
-    const referenceNumber = req.query.referenceNumber;
-    console.log('referenceNumber:', referenceNumber);
-
-    const response = await pesepay.checkPayment(referenceNumber);
-
-    // Check if the response exists and has the expected properties
+    
     if (response.success && response.paid) {
-      await bot.sendMessage(chat_id, success_message, { parse_mode: 'HTML' });
 
-      // Save the reference number from the response
-      const paymentReference = response.referenceNumber;
-      const amountValue = response.amount;
-      const currencyCode = response.currencyCode;
-
-      let savedTransaction = await Transaction.findOneAndUpdate(
-        { paymentReference: referenceNumber },
-        {
-          paymentStatus: 'completed',
-          amount: amountValue,
-          paymentCurrency: currencyCode,
-          transactionStatus: 'processing',
-          fname: fname,
-        },
-        { new: true }
-      );
-
-      if (savedTransaction) {
-        if (service) {
-          if (service === 'airtime') {
-            const customerSMS = `Your account has been credited with USD${amountValue} of airtime from KwikPay HotRecharge`;
-            const response = await utils.processAirtime(amountValue, savedTransaction.targetedPhone, customerSMS);
-
-            if (response !== null) {
-              const message = `Dear ${fname}, <b>${savedTransaction.targetedPhone}</b> has been successfully credited with <b>USD</b>${amountValue} of airtime.`;
-              await Transaction.findOneAndUpdate(
-                { _id: savedTransaction._id },
-                {
-                  transactionStatus: 'completed',
-                  endTime: new Date(),
-                  transactionReference: response.AgentReference,
-                }
-              );
-              await bot.sendMessage(chat_id, message, { parse_mode: 'HTML' });
-            } else {
-              const message = `Dear ${fname}, we received your payment of ${amountValue} and we will notify you as soon as we credit ${savedTransaction.targetedPhone}.`;
-              await Transaction.findOneAndUpdate(
-                { _id: savedTransaction._id },
-                { transactionStatus: 'pending' }
-              );
-              await bot.sendMessage(chat_id, message, { parse_mode: 'HTML' });
-            }
-          } else if (service === 'zesa') {
-            // HOT RECHARGE ZESA
-            const convertedAmount = rate ? rate.rate * amountValue : amountValue;
-            const response = await utils.processZesaPayment(
-              savedTransaction.meterNumber,
-              convertedAmount,
-              savedTransaction.targetedPhone
-            );
-
-            if (response !== null) {
-              const reference = response.reference;
-              const message = `Dear <em>${fname}</em> Your ZESA Transaction has been successful. The following are the details:
+        await bot.sendMessage(chatId, success_message, { parse_mode: "HTML" })
+        let savedTransaction = await transactionService.update(transaction, {
+            paymentStatus: 'completed', amount: amount,
+            paymentCurrency: String(currency).toLowerCase(),
+            transactionStatus: 'processing',
+            paymentReference: referenceNumber,
+            fname: req.query.fname
+        })
+        if (savedTransaction) {
+            if (req.query.service) {
+                if (req.query.service == 'airtime') {
+                    let customerSMS = `Your account has been credited with USD${amount} of airtime from KwikPay HotRecharge`
+                    const response = await utils.processAirtime(amount, savedTransaction.targetedPhone, customerSMS)
+                    if (response && !response.error) {
+                        let message = `Dear ${req.query.fname}, <b>${savedTransaction.targetedPhone}</b> has 
+                    been successfully credited with <b>USD</b>${amount} of airtime.`
+                        await transactionService.update(savedTransaction._id, {
+                            transactionStatus: 'completed', endTime: new Date()
+                            , transactionReference: response.AgentReference
+                        })
+                        await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
+                    } else {
+                        let message = `Dear ${req.query.fname}, we recieved your payment
+                    of ${amount} but we are facing challenges with the recharge platform.We will automatically recharge your account 
+                    and notify you as soon as we credit ${savedTransaction.targetedPhone}.`
+                        await transactionService.update(savedTransaction._id, { transactionStatus: 'pending' })
+                        await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
+                    }
+                } else {
+                    //HOT RACHARGE ZESA
+                    //AMOUNT IN RTGS
+                    const convertedAmount = rate?rate.rate * amount:amount
+                    const response = await utils.processZesaPayment(savedTransaction.meterNumber,convertedAmount, savedTransaction.targetedPhone);
+                    if (response != null && !response.error) {
+                        let reference = response.reference
+                        let message = `Dear <em>${req.query.fname}</> Your ZESA Transaction has been successful. The following are the details:
                 \n Meter Number: ${response.meter}
-                \n Amount: <b>ZWL</b>${response.amount},
+                \n Amount :  <b>ZWL</b>${response.amount},
                 \n Name: ${response.name},
                 \n Address: ${response.address},
                 \n Token: ${response.token},
                 \n Units: ${response.units},
-                \n Net Amount: <b>ZWL</b>${response.netamount},
+                \n Net Amount:  <b>ZWL</b>${response.netamount},
                 \n Levy: ${response.levy},
                 \n Arrears: ${response.arrears},
                 \n Tax: ${response.reference},
-                \n Reference: ${reference}`;
-
-              await Transaction.findOneAndUpdate(
-                { _id: savedTransaction._id },
-                {
-                  transactionStatus: 'completed',
-                  transactionReference: reference,
-                  convertedAmount: convertedAmount,
-                  rateOnConversion: rate ? rate.rate : 1,
-                  endTime: new Date(),
+                \n Reference: ${reference}
+                `
+                        await transactionService.update(savedTransaction._id, { transactionStatus: 'completed', transactionReference: reference,
+                        convertedAmount: convertedAmount,rateOnConversion: rate?rate.rate:1, endTime: new Date() })
+                        await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
+                    } else {
+                        let message = `Dear ${req.query.fname}, we recieved your payment
+                of ${convertedAmount} but the ZESA Processing facility is not available at the moment.
+                \nWe will keep trying to automatically credit your account.`
+                        await transactionService.update(savedTransaction._id, { transactionStatus: 'pending' })
+                        await bot.sendMessage(chatId, message, { parse_mode: "HTML" })
+                    }
                 }
-              );
-
-              await bot.sendMessage(chat_id, message, { parse_mode: 'HTML' });
-            } else {
-              const message = `Dear ${fname}, we received your payment of ${convertedAmount} and we will notify you as soon as we credit your ZESA Account.`;
-              await Transaction.findOneAndUpdate(
-                { _id: savedTransaction._id },
-                { transactionStatus: 'pending' }
-              );
-              await bot.sendMessage(chat_id, message, { parse_mode: 'HTML' });
             }
-          }
-        }
-      }
-    } else {
-      // Handle the case where the response is invalid or payment is not completed
-      const failure_message = `Dear <b><em>${fname}</em></b> Your Payment Failed to Complete successfully`;
-      await bot.sendMessage(chat_id, failure_message, { parse_mode: 'HTML' });
-      await Transaction.findOneAndUpdate(
-        { paymentReference: referenceNumber },
-        {
-          paymentStatus: 'failed',
-          amount: amount,
-          //paymentCurrency: currencyCode.toLowerCase(),
-          transactionStatus: 'failed',
-        }
-      );
-    }
-  } catch (error) {
-    // Handle any errors that occurred during the process
-    console.error('Error retrieving session:', error);
-    res.status(500).json({ error: 'An error occurred while processing the payment.' });
-    return; // Add this to stop the execution when an error occurs
-  }
 
-  res.redirect(`https://t.me/${config.BOT_USER}?chat_id=${chat_id}`);
+        }
+
+    } else {
+        const failure_message = ` Dear <b><em>${req.query.fname}</em></b> Your Payment Failed to Complete successfully`
+        await bot.sendMessage(chatId, failure_message, { parse_mode: "HTML" })
+        await transactionService.update(transaction, {
+            paymentStatus: 'failed', amount: amount,
+            paymentCurrency: String(currencyCode).toLowerCase(),// rateOnConversion: rate, convertedAmount: convertedAmount,
+            paymentReference: referenceNumber, transactionStatus: 'failed'
+        })
+    }
+    res.redirect(`https://t.me/${config.BOT_USER}?chat_id=${chatId}`)
 };
 
-exports.failure = async (req, res) => {
+exports.failure = async (req, res, chat_id) => {
   const failure_message = `Dear <b><em>${req.query.fname}</em></b>, Your Payment Has Been Cancelled`;
 
   try {
