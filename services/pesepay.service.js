@@ -14,11 +14,13 @@ const pesepay = new Pesepay(integrationKey, encryptionKey);
 
 async function checkout(chatId, fname, transactionId, service) {
   try {
-    const successUrl = `${config.redirect_url}/pesepay/success?reference_id={referenceNumber}&fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
-    const failureUrl = `${config.redirect_url}/pesepay/failure?reference_id={referenceNumber}&fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
+    // Construct URLs using the referenceNumber
+    const referenceNumber = ''; // Define referenceNumber here
+    const successUrl = `${config.redirect_url}/pesepay/success?reference_id=${referenceNumber}&fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
+    const failureUrl = `${config.redirect_url}/pesepay/failure?reference_id=${referenceNumber}&fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
 
-    // Set the return and result URLs
-    pesepay.resultUrl = failureUrl; // Set the result URL
+    // Set the result and return URLs
+    pesepay.resultUrl = failureUrl;
     pesepay.returnUrl = successUrl;
 
     // Step 1: Create a transaction
@@ -29,16 +31,14 @@ async function checkout(chatId, fname, transactionId, service) {
 
     // Use the redirect URL to complete the transaction on the Pesepay payment page
     const redirectUrl = response.redirectUrl;
-    // Save the reference number (used to check the status of a transaction and make the payment)
-    const referenceNumber = response.referenceNumber;
 
     const newTransaction = new Transaction({
       chatId: chatId,
       amount: amount,
       paymentCurrency: currencyCode,
-      paymentStatus: 'pending', // Assuming the initial status is 'pending'
-      paymentReference: referenceNumber,
-      transactionStatus: 'pending', // Assuming the initial status is 'pending'
+      paymentStatus: 'pending',
+      paymentReference: response.referenceNumber, // Save the referenceNumber from the response
+      transactionStatus: 'pending',
       paymentMethod: 'pesepay',
     });
 
