@@ -27,8 +27,8 @@ exports.success = async ( req, res ) =>
      const chatId = req.query.chat_id
      const rate = await rateService.findByCurrencyFrom(String(currencyCode).toUpperCase());
     
-  console.log( req.body ); // Logging the req.body object
   console.log( req.query ); // Logging the req object
+  console.log('Request Body:', req.body); // Debugging line
     
   if ( req.body && req.body.transactionStatus == 'SUCCESS' )
   {

@@ -1,4 +1,4 @@
-require('dotenv').config()
+require( 'dotenv' ).config()
 const express = require( 'express' );
 const app = express();
 const config = require( './config.js' )
@@ -7,6 +7,7 @@ const bot = require('./services/bot.js')
 const routes = require('./router');
 const cronServices = require('./services/cron.service');
 
+app.use(express.json());
 
 routes.register(app)
 // Update Pending Transactions
