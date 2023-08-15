@@ -16,18 +16,21 @@ async function checkout(chatId, fname, transactionId, service) {
   try {
     // Construct URLs using the referenceNumber
     const referenceNumber = ''; // Define referenceNumber here
-    const successUrl = `${config.redirect_url}/pesepay/success?reference_id=${referenceNumber}&fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
-    const failureUrl = `${config.redirect_url}/pesepay/failure?reference_id=${referenceNumber}&fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
+    const successUrl = `${config.redirect_url}/pesepay/success?referenceNumber=${referenceNumber}&fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
+    //const successUrl = `${config.redirect_url}/pesepay/failure?referenceNumber=${referenceNumber}&fname=${fname}&chat_id=${chatId}&transaction=${transactionId}&service=${service}`;
 
     // Set the result and return URLs
-    pesepay.resultUrl = failureUrl;
+    pesepay.resultUrl = successUrl;
     pesepay.returnUrl = successUrl;
 
     // Step 1: Create a transaction
     const transaction = pesepay.createTransaction(amount, currencyCode, paymentReason);
 
     // Step 2: Initiate the transaction
-    const response = await pesepay.initiateTransaction(transaction);
+    const response = await pesepay.initiateTransaction( transaction );
+
+    //Define PollUrl here
+    const pollUrl = '';
 
     // Use the redirect URL to complete the transaction on the Pesepay payment page
     const redirectUrl = response.redirectUrl;
@@ -38,6 +41,7 @@ async function checkout(chatId, fname, transactionId, service) {
       paymentCurrency: currencyCode,
       paymentStatus: 'pending',
       paymentReference: response.referenceNumber, // Save the referenceNumber from the response
+      transactionPollUrl: response.pollUrl, // Save the Pollurl from the response
       transactionStatus: 'pending',
       paymentMethod: 'pesepay',
     });

@@ -2,8 +2,8 @@ var express = require('express');
 var controller = require('./pesepay.controller');
 var router = express.Router();
 
-router.get('/success', controller.success);
+router.post('/success', controller.success);
 
-router.get('/failure', controller.failure);
+router.post('/failure', controller.failure);
 
 module.exports = router;

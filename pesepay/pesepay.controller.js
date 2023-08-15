@@ -7,33 +7,38 @@ const Transaction = require('../models/transaction.model');
 const transactionService = require('../services/transaction.service');
 const rateService = require('../services/currency_rate.service');
 const { Pesepay } = require('pesepay');
+const { request } = require( 'express' );
 const integrationKey = 'b32bae83-ea8a-4e4a-9b33-80851b1a5514';
 const encryptionKey = '6b2a34e90711448a88253ca906727335';
 
 const pesepay = new Pesepay( integrationKey, encryptionKey );
 
-exports.success = async (req, res) => {
+exports.success = async ( req, res ) =>
+{ 
 
     const success_message = `Dear <b><em>${req.query.fname}</em></b> Your Payment Has Been Received.
-    Please wait whilest we transfer your ${req.query.service} to your account.`
+    Please wait whilest we transfer your ${req.query.service } to your account.`
 
-    const response = await pesepay.checkPayment(req.query.reference_id);
-    const currencyCode = response.currencyCode
-    //STRIPE BRINGS AMOUNT IN CENTS, SO CONVERT TO POUNDS BY DIVIDING WITH 100
-    const amount = response.amount_total
-    const referenceNumber = req.query.reference_id;
-    const transaction = req.query.transaction
-    const chatId = req.query.chat_id
-    const rate = await rateService.findByCurrencyFrom(String(currencyCode).toUpperCase());
+    // const response = await pesepay.checkPayment(req.query.referenceNumber);
+     const currencyCode = req.query.currencyCode
+     const amount = req.query.amount_total
+     const referenceNumber = req.query.referenceNumber;
+     const transaction = req.query.transaction
+     const chatId = req.query.chat_id
+     const rate = await rateService.findByCurrencyFrom(String(currencyCode).toUpperCase());
     
+  console.log( req.body ); // Logging the req.body object
+  console.log( req.query ); // Logging the req object
     
-    if (response.success && response.paid) {
+  if ( req.body && r.transactionStatus == 'SUCCESS' )
+  {
+      console.log('Transaction was successful.');
 
         await bot.sendMessage(chatId, success_message, { parse_mode: "HTML" })
         let savedTransaction = await transactionService.update(transaction, {
             paymentStatus: 'completed', amount: amount,
             paymentCurrency: String(currency).toLowerCase(),
-            transactionStatus: 'processing',
+            transactionStatus: 'success',
             paymentReference: referenceNumber,
             fname: req.query.fname
         })
@@ -92,7 +97,9 @@ exports.success = async (req, res) => {
 
         }
 
-    } else {
+  } else
+  {
+    console.log('Transaction was not successful.');
         const failure_message = ` Dear <b><em>${req.query.fname}</em></b> Your Payment Failed to Complete successfully`
         await bot.sendMessage(chatId, failure_message, { parse_mode: "HTML" })
         await transactionService.update(transaction, {
@@ -104,21 +111,21 @@ exports.success = async (req, res) => {
     res.redirect(`https://t.me/${config.BOT_USER}?chat_id=${chatId}`)
 };
 
-exports.failure = async (req, res, chat_id) => {
+exports.failure = async (req, res) => {
   const failure_message = `Dear <b><em>${req.query.fname}</em></b>, Your Payment Has Been Cancelled`;
 
   try {
     const referenceNumber = req.query.referenceNumber;
     const response = await pesepay.checkPayment(referenceNumber);
 
-    if (response.success) {
+    if (response.cancelled && response.failed) {
       const currency = response.currencyCode;
       const amount = response.amount;
       const chatId = req.query.chat_id;
       const rate = await rateService.findByCurrencyFrom(currency.toUpperCase());
       const convertedAmount = rate ? rate.rate * amount : amount;
 
-      await bot.sendMessage(chatId, failure_message, { parse_mode: 'HTML' });
+      await bot.sendMessage( chatId, failure_message, { parse_mode: 'HTML' } );
       await transactionService.update(response.transaction, {
         paymentStatus: 'cancelled',
         amount: amount,
@@ -127,6 +134,7 @@ exports.failure = async (req, res, chat_id) => {
         convertedAmount: convertedAmount,
         paymentReference: referenceNumber,
         transactionStatus: 'cancelled',
+        fname: req.query.fname
       });
 
       res.redirect(`https://t.me/${config.BOT_USER}?chat_id=${chatId}`);
