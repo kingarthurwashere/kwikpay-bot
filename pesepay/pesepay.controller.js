@@ -30,7 +30,7 @@ exports.success = async ( req, res ) =>
   console.log( req.body ); // Logging the req.body object
   console.log( req.query ); // Logging the req object
     
-  if ( req.body && r.transactionStatus == 'SUCCESS' )
+  if ( req.body && req.body.transactionStatus == 'SUCCESS' )
   {
       console.log('Transaction was successful.');
 
