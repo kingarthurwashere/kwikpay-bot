@@ -17,7 +17,7 @@ async function create(transactionParam){
 
 // Update Transaction
 async function update(id, transactionParam) {
-    let transaction = await Transaction.findById(id);
+    let transaction = await Transaction.findById(id );
     // Validate
     if (!transaction) throw 'Transaction not Found';
 
@@ -26,7 +26,7 @@ async function update(id, transactionParam) {
 
     await transaction.save();
 
-    return await Transaction.findById(id);
+    return await Transaction.findById(id );
 
 }
 

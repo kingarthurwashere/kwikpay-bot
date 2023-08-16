@@ -19,23 +19,17 @@ exports.success = async ( req, res ) =>
     const success_message = `Dear <b><em>${req.query.fname}</em></b> Your Payment Has Been Received.
     Please wait whilest we transfer your ${req.query.service } to your account.`
   
-     const response = await pesepay.checkPayment(req.body.referenceNumber);
-     const currencyCode = response.currencyCode
-     const amount = response.amount
+    
+     const currencyCode = req.body.amountDetails.currencyCode
+     const amount = req.body.amountDetails.amount
      const referenceNumber = req.body.referenceNumber;
      const transaction = req.query.transaction
      const chatId = req.query.chat_id
      const rate = await rateService.findByCurrencyFrom(String(currencyCode).toUpperCase());
     
-  console.log( req.query ); // Logging the req object
-  console.log( 'Request Body:', req.body ); // Debugging line
-  console.log( 'currecyCode:', currencyCode );
-  console.log( 'amount:', amount );
     
   if ( req.body && req.body.transactionStatus == 'SUCCESS' )
   {
-      console.log('Transaction was successful.');
-
         await bot.sendMessage(chatId, success_message, { parse_mode: "HTML" })
         let savedTransaction = await transactionService.update(transaction, {
             paymentStatus: 'completed', amount: amount,
@@ -101,12 +95,11 @@ exports.success = async ( req, res ) =>
 
   } else
   {
-    console.log('Transaction was not successful.');
         const failure_message = ` Dear <b><em>${req.query.fname}</em></b> Your <b><em>${currencyCode}${amount}</em></b> Payment Failed to Complete successfully`
         await bot.sendMessage(chatId, failure_message, { parse_mode: "HTML" })
         await transactionService.update(transaction, {
             paymentStatus: 'failed', amount: amount,
-            paymentCurrency: String(currencyCode).toLowerCase(),// rateOnConversion: rate, convertedAmount: convertedAmount,
+            paymentCurrency: String(currencyCode).toLowerCase(), rateOnConversion: rate, convertedAmount: convertedAmount,
             paymentReference: referenceNumber, transactionStatus: 'failed'
         })
     }
@@ -114,41 +107,27 @@ exports.success = async ( req, res ) =>
 };
 
 exports.failure = async (req, res) => {
-  const failure_message = `Dear <b><em>${req.query.fname}</em></b>, Your Payment of b><em>${req.body.currency}${req.body.amount}</em></b> Has Been Cancelled`;
+    const failure_message = ` Dear <b><em>${req.query.fname}</em></b> Your Payment Has Been Cancelled`
+    
+    if (req.body && req.body.transactionStatus == 'CANCELLED') {
+        const currency = req.body.amountDetails.currencyCode
+        const amount = req.body.amountDetails.amount
+        const reference = req.body.referenceNumber
+        const transaction = req.query.transaction
+        const chatId = req.query.chat_id
+        const rate = await rateService.findByCurrencyFrom(String(currency).toUpperCase());
+        //AMOUNT IN RTGS
+        const convertedAmount = rate * amount
+        await bot.sendMessage(chatId, failure_message, { parse_mode: "HTML" })
+        await transactionService.update(transaction, {
+            paymentStatus: 'cancelled', amount: amount,
+            paymentCurrency: String(currency).toLowerCase(), rateOnConversion: rate, convertedAmount: convertedAmount,
+            paymentReference: reference, transactionStatus: 'cancelled'
+        })
+        res.redirect(`https://t.me/${config.BOT_USER}?chat_id=${chatId}`)
 
-  try {
-    const referenceNumber = req.body.referenceNumber;
-    //await pesepay.checkPayment( referenceNumber );
-    const currency = req.body.currencyCode;
-    const amount = req.body.amount;
-    const chatId = req.query.chat_id;
-    const rate = await rateService.findByCurrencyFrom( currency.toUpperCase() );
-    const convertedAmount = rate ? rate.rate * amount : amount;
-
-
-    if ( req.body && req.body.transactionStatus == 'CANCELLED') {
-
-      await bot.sendMessage( chatId, failure_message, { parse_mode: 'HTML' } );
-      await transactionService.update(response.transaction, {
-        paymentStatus: 'cancelled',
-        amount: amount,
-        paymentCurrency: currency.toLowerCase(),
-        rateOnConversion: rate ? rate.rate : 1,
-        convertedAmount: convertedAmount,
-        paymentReference: referenceNumber,
-        transactionStatus: 'cancelled',
-        fname: req.query.fname
-      });
-
-      res.redirect(`https://t.me/${config.BOT_USER}?chat_id=${chatId}`);
-    } else {
-      res.status(400).json({ error: 'Invalid session ID.' });
     }
-  } catch (error) {
-    console.error('Error retrieving session:', error);
-    res.status(500).json({ error: 'An error occurred while processing the payment.' });
-  }
-};
+}
 
 exports.processPendingTransactions = async () => {
   const transactions = await transactionService.findTransactionsPendingSettlement();
