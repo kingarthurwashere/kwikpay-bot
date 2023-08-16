@@ -22,7 +22,7 @@ const TransactionSchema = new Schema({
   paymentReference: { type: String },
   transactionReference: { type: String },
   transactionPollUrl: { type: String },
-  transactionStatus: { type: String, enum: ['pending', 'completed', 'cancelled', 'Success', 'failed'] },
+  transactionStatus: { type: String, enum: ['pending', 'completed', 'cancelled', 'success', 'failed'] },
   startTime: { type: Date },
   endTime: { type: Date },
   paymentMethod: { type: String, enum: ['pesepay', 'stripe'] },

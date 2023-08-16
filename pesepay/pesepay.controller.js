@@ -18,17 +18,19 @@ exports.success = async ( req, res ) =>
 
     const success_message = `Dear <b><em>${req.query.fname}</em></b> Your Payment Has Been Received.
     Please wait whilest we transfer your ${req.query.service } to your account.`
-
-    // const response = await pesepay.checkPayment(req.query.referenceNumber);
-     const currencyCode = req.query.currencyCode
-     const amount = req.query.amount_total
-     const referenceNumber = req.query.referenceNumber;
+  
+     const response = await pesepay.checkPayment(req.body.referenceNumber);
+     const currencyCode = response.currencyCode
+     const amount = response.amount
+     const referenceNumber = req.body.referenceNumber;
      const transaction = req.query.transaction
      const chatId = req.query.chat_id
      const rate = await rateService.findByCurrencyFrom(String(currencyCode).toUpperCase());
     
   console.log( req.query ); // Logging the req object
-  console.log('Request Body:', req.body); // Debugging line
+  console.log( 'Request Body:', req.body ); // Debugging line
+  console.log( 'currecyCode:', currencyCode );
+  console.log( 'amount:', amount );
     
   if ( req.body && req.body.transactionStatus == 'SUCCESS' )
   {
@@ -37,7 +39,7 @@ exports.success = async ( req, res ) =>
         await bot.sendMessage(chatId, success_message, { parse_mode: "HTML" })
         let savedTransaction = await transactionService.update(transaction, {
             paymentStatus: 'completed', amount: amount,
-            paymentCurrency: String(currency).toLowerCase(),
+            paymentCurrency: String(currencyCode).toLowerCase(),
             transactionStatus: 'success',
             paymentReference: referenceNumber,
             fname: req.query.fname
@@ -100,7 +102,7 @@ exports.success = async ( req, res ) =>
   } else
   {
     console.log('Transaction was not successful.');
-        const failure_message = ` Dear <b><em>${req.query.fname}</em></b> Your Payment Failed to Complete successfully`
+        const failure_message = ` Dear <b><em>${req.query.fname}</em></b> Your <b><em>${currencyCode}${amount}</em></b> Payment Failed to Complete successfully`
         await bot.sendMessage(chatId, failure_message, { parse_mode: "HTML" })
         await transactionService.update(transaction, {
             paymentStatus: 'failed', amount: amount,
@@ -112,18 +114,19 @@ exports.success = async ( req, res ) =>
 };
 
 exports.failure = async (req, res) => {
-  const failure_message = `Dear <b><em>${req.query.fname}</em></b>, Your Payment Has Been Cancelled`;
+  const failure_message = `Dear <b><em>${req.query.fname}</em></b>, Your Payment of b><em>${req.body.currency}${req.body.amount}</em></b> Has Been Cancelled`;
 
   try {
-    const referenceNumber = req.query.referenceNumber;
-    const response = await pesepay.checkPayment(referenceNumber);
+    const referenceNumber = req.body.referenceNumber;
+    //await pesepay.checkPayment( referenceNumber );
+    const currency = req.body.currencyCode;
+    const amount = req.body.amount;
+    const chatId = req.query.chat_id;
+    const rate = await rateService.findByCurrencyFrom( currency.toUpperCase() );
+    const convertedAmount = rate ? rate.rate * amount : amount;
 
-    if (response.cancelled && response.failed) {
-      const currency = response.currencyCode;
-      const amount = response.amount;
-      const chatId = req.query.chat_id;
-      const rate = await rateService.findByCurrencyFrom(currency.toUpperCase());
-      const convertedAmount = rate ? rate.rate * amount : amount;
+
+    if ( req.body && req.body.transactionStatus == 'CANCELLED') {
 
       await bot.sendMessage( chatId, failure_message, { parse_mode: 'HTML' } );
       await transactionService.update(response.transaction, {
