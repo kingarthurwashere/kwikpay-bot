@@ -44,8 +44,7 @@ exports.success = async ( req, res ) =>
                     let customerSMS = `Your account has been credited with USD${amount} of airtime from KwikPay HotRecharge`
                     const response = await utils.processAirtime(amount, savedTransaction.targetedPhone, customerSMS)
                     if (response && !response.error) {
-                        let message = `Dear ${req.query.fname}, <b>${savedTransaction.targetedPhone}</b> has 
-                    been successfully credited with <b>USD</b>${amount} of airtime.`
+                        let message = `Dear ${req.query.fname}, <b>${savedTransaction.targetedPhone}</b> has been successfully credited with <b>USD</b>${amount} of airtime.`
                         await transactionService.update(savedTransaction._id, {
                             transactionStatus: 'completed', endTime: new Date()
                             , transactionReference: response.AgentReference
@@ -95,11 +94,11 @@ exports.success = async ( req, res ) =>
 
   } else
   {
-        const failure_message = ` Dear <b><em>${req.query.fname}</em></b> Your <b><em>${currencyCode}${amount}</em></b> Payment Failed to Complete successfully`
+        const failure_message = ` Dear <b><em>${req.query.fname}</em></b> Your <b><em>${currencyCode} ${amount}</em></b> Payment Failed to Complete successfully`
         await bot.sendMessage(chatId, failure_message, { parse_mode: "HTML" })
         await transactionService.update(transaction, {
             paymentStatus: 'failed', amount: amount,
-            paymentCurrency: String(currencyCode).toLowerCase(), rateOnConversion: rate, convertedAmount: convertedAmount,
+            paymentCurrency: String(currencyCode).toLowerCase(), //rateOnConversion: rate, convertedAmount: convertedAmount,
             paymentReference: referenceNumber, transactionStatus: 'failed'
         })
     }
