@@ -196,6 +196,25 @@ bot.on("callback_query", async (msg) => {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
     await transactionService.update(transaction._id, { paymentMethod: 'pesepay' })
     await confirmPayment(transaction,chatId);
+  } // Add Amount function here
+  else if ( data == 'addAmount' )
+  {
+    let transaction = await transactionService.findTransactionsPendingCompletion( chatId );
+    await bot.sendMessage( chatId, `Please enter the additional amount you want to add:`, { reply_markup: { force_reply: true } } );
+
+    bot.onReplyToMessage( chatId, msg.message_id, async ( message ) =>
+    {
+      const additionalAmount = parseFloat( message.text );
+      if ( isNaN( additionalAmount ) || additionalAmount <= 0 )
+      {
+        await bot.sendMessage( chatId, `Invalid amount entered. Please enter a valid positive number as the additional amount.` );
+      } else
+      {
+
+        // Continue with the payment process
+        await confirmPayment( transaction, chatId );
+      }
+    } );
   }
   else if (data == 'admin') {
     //USER IS AN ADMINISTRATOR
