@@ -91,7 +91,8 @@ exports.success = async (req, res) => {
         await bot.sendMessage(chatId, failure_message, { parse_mode: "HTML" })
         await transactionService.update(transaction, {
             paymentStatus: 'failed', amount: amount,
-            paymentCurrency: String(currency).toLowerCase(), rateOnConversion: rate, convertedAmount: convertedAmount,
+            paymentCurrency: String(currency).toLowerCase(), 
+            rateOnConversion: rate, convertedAmount: convertedAmount,
             paymentReference: reference, transactionStatus: 'failed'
         })
     }

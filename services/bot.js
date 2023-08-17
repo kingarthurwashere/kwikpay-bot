@@ -80,6 +80,18 @@ bot.on('message', async (msg) => {
           await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`
             , paymentMethods)
         }
+        else if(transaction.paymentMethod=='pesepay' && !transaction.amount){
+          
+      if (!isNaN(parseFloat(msg.text)&& parseFloat(msg.text)<=0))
+      {
+        await bot.sendMessage( chatId, `Invalid amount entered. Please enter a valid positive number:` );
+           
+       } else{
+        await transactionService.update(transaction._id, { amount: parseFloat(msg.text) })
+        await confirmPayment(transaction, chatId);
+       }
+          
+        }
         else {
           await confirmPayment(transaction, chatId);
         }
@@ -186,7 +198,7 @@ bot.on("callback_query", async (msg) => {
   } else if (data == 'ZARUPDATE') {
     await updateCurrencyRate('ZAR', chatId)
   }
-  //HANDLE CHOICE OF PAYMENT METHODS
+  //HANDLE CHOICE OF PAYMENT METHODSaddAmount
   else if (data == 'stripePayment') {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
     await transactionService.update(transaction._id, { paymentMethod: 'stripe' })
@@ -195,32 +207,7 @@ bot.on("callback_query", async (msg) => {
   else if (data == 'pesepayPayment') {
     let transaction = await transactionService.findTransactionsPendingCompletion(chatId);
     await transactionService.update(transaction._id, { paymentMethod: 'pesepay' })
-    await confirmPayment(transaction,chatId);
-  } // Add Amount function here
-  else if ( data == 'addAmount' )
-  {
-    let transaction = await transactionService.findTransactionsPendingCompletion( chatId );
-    await bot.sendMessage( chatId, `Please enter the additional amount you want to add:`, { reply_markup: { force_reply: true } } )
-    .then((msg) => {
-      //On Reply Method Was Being Called Without The Message To Reply To, I fixed That on line 204
-    bot.onReplyToMessage( chatId, msg.message_id, async ( message ) =>
-    {
-      const additionalAmount = parseFloat( message.text );
-      if ( isNaN( additionalAmount ) || additionalAmount <= 0 )
-      {
-        //If A person Enters an Invalid Amount, this will ask them to re-enter amount, but where is the amount going?
-        await bot.sendMessage( chatId, `Invalid amount entered. Please enter a valid positive number as the additional amount.` );
-        //So you need a way to capture the amount out side the addAmount Button so that you don't lose track of the amount  
-        // After receiving the amount, Save it in the database then you can reference it from the Transaction
-        //Check what we did on line 105 to line line 115, to see how you need to go about it
-      } else
-      {
-
-        // Continue with the payment process
-        await confirmPayment( transaction, chatId );
-      }
-    } );
-  })
+    await bot.sendMessage( chatId, `Please enter the Amount in (USD):`, { reply_markup: { force_reply: true } } )
   }
   else if (data == 'admin') {
     //USER IS AN ADMINISTRATOR
@@ -303,8 +290,7 @@ async function processPayment(chatId, fname, transactionId, service,paymentMetho
           , { parse_mode: 'HTML' });
       }
     } else if (paymentMethod === 'pesepay') {
-      // Call your Pesepay checkout function here
-      
+  
       const redirectUrl = await pesepayService.checkout(chatId, fname, transactionId, service);
       if (redirectUrl) {
         await bot.sendMessage(chatId, `Please click the link to proceed with the Pesepay payment: ${redirectUrl}`);

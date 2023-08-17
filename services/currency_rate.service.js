@@ -46,7 +46,7 @@ async function getOne(id){
 
 async function findByCurrencyFrom(currency){
 
-    return CurrencyRate.findOne();
+    return CurrencyRate.findOne({currencyfrom:currency});
 }
 async function findAll(){
 

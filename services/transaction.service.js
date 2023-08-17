@@ -34,6 +34,10 @@ async function getOne(chatId){
 
     return await Transaction.findOne({chatId: chatId});
 }
+async function findById(id){
+
+    return await Transaction.findById(id);
+}
 
 async function findTransactionsPendingCompletion(chatId){
 
@@ -44,4 +48,4 @@ async function findTransactionsPendingSettlement(){
     return await Transaction.find({$and:[{paymentStatus:'completed'},{transactionStatus:'pending'}]})
 }
 
-module.exports = { create,getOne, update,findTransactionsPendingSettlement,findTransactionsPendingCompletion};
+module.exports = { create,getOne, update,findTransactionsPendingSettlement,findTransactionsPendingCompletion,findById};
