@@ -15,8 +15,8 @@ let config = {
   HOT_RECHARGE_PW: process.env.HOT_RECHARGE_PW,
   INTEGRATION_KEY: process.env.INTEGRATION_KEY,
   ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
-  APP_ID: process.env.APP_ID,
-  APP_CODE: process.env.APP_CODE
+  PESE_INTEGRATION_KEY : process.env.PESE_INTEGRATION_KEY ,
+  PESE_ENCRYPTION_KEY: process.env.PESE_ENCRYPTION_KEY
   
   
 };

@@ -5,9 +5,8 @@ const config = require('../config');
 const transactionService = require('../services/transaction.service');
 
 // Replace the following variables with your actual values
-const integrationKey = 'b32bae83-ea8a-4e4a-9b33-80851b1a5514';
-const encryptionKey = '6b2a34e90711448a88253ca906727335';
-const amount = 2; // Amount in your desired currency's minor unit (e.g., cents)
+const integrationKey = config.PESE_INTEGRATION_KEY;
+const encryptionKey = config.PESE_ENCRYPTION_KEY;
 const currencyCode = 'ZWL'; // Replace with the desired currency code
 const paymentReason = 'Test payment';
 

@@ -82,7 +82,7 @@ bot.on('message', async (msg) => {
         }
         else if(transaction.paymentMethod=='pesepay' && !transaction.amount){
           
-      if (!isNaN(parseFloat(msg.text)&& parseFloat(msg.text)<=0))
+      if (isNaN(parseFloat(msg.text)|| parseFloat(msg.text)<=0))
       {
         await bot.sendMessage( chatId, `Invalid amount entered. Please enter a valid positive number:` );
            
@@ -291,7 +291,7 @@ async function processPayment(chatId, fname, transactionId, service,paymentMetho
       }
     } else if (paymentMethod === 'pesepay') {
   
-      const redirectUrl = await pesepayService.checkout(chatId, fname, transactionId, service);
+      const redirectUrl = await pesepayService.checkout(transactionId);
       if (redirectUrl) {
         await bot.sendMessage(chatId, `Please click the link to proceed with the Pesepay payment: ${redirectUrl}`);
       } else {
