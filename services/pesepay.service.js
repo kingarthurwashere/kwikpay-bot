@@ -7,8 +7,8 @@ const transactionService = require('../services/transaction.service');
 // Replace the following variables with your actual values
 const integrationKey = config.PESE_INTEGRATION_KEY;
 const encryptionKey = config.PESE_ENCRYPTION_KEY;
-const currencyCode = 'ZWL'; // Replace with the desired currency code
-const paymentReason = 'Test payment';
+const currencyCode = 'USD'; // Replace with the desired currency code
+const paymentReason = 'Electricity and Airtime Purchases';
 
 const pesepay = new Pesepay(integrationKey, encryptionKey);
 
