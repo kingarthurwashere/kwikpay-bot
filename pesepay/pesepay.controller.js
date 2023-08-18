@@ -11,14 +11,13 @@ exports.success = async ( req, res ) =>
     const success_message = `Dear <b><em>${transaction.fname}</em></b> Your Payment Has Been Received.
     Please wait whilest we transfer your ${transaction.transactionType } to your account.`
   
-    
      // DEFAULT TO USD IF PESE PAY
      const rate = await rateService.findByCurrencyFrom('USD');
     
     // CONFIRM IF THE METHOD RETURNS  transactionStatus == 'SUCCESS' AFTER SUCCESS
   if ( req.body && req.body.transactionStatus == 'SUCCESS' )
   {
-        await bot.sendMessage(chatId, success_message, { parse_mode: "HTML" })
+        await bot.sendMessage(transaction.chatId, success_message, { parse_mode: "HTML" })
         let savedTransaction = await transactionService.update(transaction._id, {
             paymentStatus: 'completed',
             paymentCurrency:'USD'

@@ -150,6 +150,7 @@ bot.on("callback_query", async (msg) => {
     transactionType: 'airtime',
     paymentStatus: 'pending',
     transactionStatus: 'pending',
+    fname:fname,
     startTime: new Date(),
   }
   const exchangeRate = await currencyRateService.findByCurrencyFrom('USD');
