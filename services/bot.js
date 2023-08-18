@@ -81,13 +81,12 @@ bot.on('message', async (msg) => {
             , paymentMethods)
         }
         else if(transaction.paymentMethod=='pesepay' && !transaction.amount){
-          
-      if (isNaN(parseFloat(msg.text)|| parseFloat(msg.text)<=0))
+      if (isNaN(parseFloat(msg.text))|| parseFloat(msg.text)<=0)
       {
         await bot.sendMessage( chatId, `Invalid amount entered. Please enter a valid positive number:` );
            
        } else{
-        await transactionService.update(transaction._id, { amount: parseFloat(msg.text) })
+        await transactionService.update(transaction._id, { amount: msg.text })
         await confirmPayment(transaction, chatId);
        }
           
@@ -129,6 +128,17 @@ bot.on('message', async (msg) => {
           await bot.sendMessage(chatId, `<b><em>Please Select A Payment Method Below </em>: </b>`
             , paymentMethods)
         }
+        else if(transaction.paymentMethod=='pesepay' && !transaction.amount){
+          if (isNaN(parseFloat(msg.text))|| parseFloat(msg.text)<=0)
+          {
+            await bot.sendMessage( chatId, `Invalid amount entered. Please enter a valid positive number:` );
+               
+           } else{
+            await transactionService.update(transaction._id, { amount: msg.text })
+            await confirmPayment(transaction, chatId);
+           }
+              
+            }
         else {
           await confirmPayment(transaction, chatId);
         }

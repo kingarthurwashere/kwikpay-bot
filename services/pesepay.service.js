@@ -23,8 +23,10 @@ async function checkout(transactionId) {
     pesepay.returnUrl = failureUrl;
 
     let transaction = await transactionService.findById(transactionId)
+  
     if(transaction){
     // Step 1: Create a transaction
+    try{
     const peseTransaction = pesepay.createTransaction(transaction.amount, currencyCode, paymentReason);
 
     // Step 2: Initiate the transaction
@@ -36,9 +38,12 @@ async function checkout(transactionId) {
     // UPDATE REFERENCE
     await transactionService.update(transaction._id,{transactionReference: response.referenceNumber,paymentCurrency: currencyCode});
     return redirectUrl;
-  }else{
+    }else{
     return null;
-  }
+    }
+  }catch(e){
+    }
+
 }else{
   return {error: "Transaction Not Found"};
 }
