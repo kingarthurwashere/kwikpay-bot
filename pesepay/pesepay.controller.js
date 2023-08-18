@@ -19,14 +19,13 @@ exports.success = async ( req, res ) =>
   {
         await bot.sendMessage(transaction.chatId, success_message, { parse_mode: "HTML" })
         let savedTransaction = await transactionService.update(transaction._id, {
-            paymentStatus: 'completed',
-            paymentCurrency:'USD'
+            paymentStatus: 'completed'
         })
 
         if (savedTransaction) {
                 if (savedTransaction.transactionType == 'airtime') {
                   let amount = savedTransaction.amount;
-                    let customerSMS = `Your account has been credited with USD${amount} of airtime from KwikPay HotRecharge`
+                    let customerSMS = `Your account has been credited with ${savedTransaction.paymentCurrency}${amount} of airtime from KwikPay HotRecharge`
                     const response = await utils.processAirtime(amount, savedTransaction.targetedPhone, customerSMS)
                     if (response && !response.error) {
                         let message = `Dear ${savedTransaction.fname}, <b>${savedTransaction.targetedPhone}</b> has been successfully credited with <b>USD</b>${amount} of airtime.`
@@ -45,7 +44,7 @@ exports.success = async ( req, res ) =>
                 } else {
                     //HOT RACHARGE ZESA
                     //AMOUNT IN RTGS
-                    const convertedAmount = rate?rate.rate * amount:amount
+                    const convertedAmount = savedTransaction.paymentCurrency=='ZWL'?savedTransaction.amount:rate?rate.rate * savedTransaction.amount:savedTransaction.amount
                     const response = await utils.processZesaPayment(savedTransaction.meterNumber,convertedAmount, savedTransaction.targetedPhone);
                     if (response != null && !response.error) {
                         let reference = response.reference
@@ -77,12 +76,12 @@ exports.success = async ( req, res ) =>
 
   } else
   {
-        const failure_message = ` Dear <b><em>${transaction.fname}</em></b> Your <b><em>USD${transaction.amount}</em></b> Payment Failed to Complete successfully`
+        const failure_message = ` Dear <b><em>${transaction.fname}</em></b> Your <b><em>${transaction.paymentCurrency}${transaction.amount}</em></b> Payment Failed to Complete successfully`
         await bot.sendMessage(transaction.chatId, failure_message, { parse_mode: "HTML" })
         await transactionService.update(transaction._id, {
             paymentStatus: 'failed', 
-            rateOnConversion: rate.rate, 
-            convertedAmount: transaction.amount*rate.rate,
+            rateOnConversion: transaction.paymentCurrency!='ZWL'?rate.rate:1,
+            convertedAmount:transaction.paymentCurrency!='ZWL'? transaction.amount*rate.rate:transaction.amount,
             transactionStatus: 'failed'
         })
     }

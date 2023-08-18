@@ -34,7 +34,7 @@ async function checkout(transactionId) {
     if(response){
     const redirectUrl = response.redirectUrl;
     // UPDATE REFERENCE
-    await transactionService.update(transaction._id,{transactionReference: response.referenceNumber});
+    await transactionService.update(transaction._id,{transactionReference: response.referenceNumber,paymentCurrency: currencyCode});
     return redirectUrl;
   }else{
     return null;
