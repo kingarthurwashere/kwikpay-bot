@@ -8,70 +8,92 @@ const recharge = new HotRecharge( {
 
 async function processZesaPayment ( meterNumber, amount, mobileNumber )
 {
-
-  return new Promise( ( resolve ) =>
+  try
   {
-    recharge.rechargeZesa( amount, mobileNumber, meterNumber )
-      .then( ( response ) =>
-      {
-
-        if ( response.ReplyCode === 2 )
-        {
-          // Successful recharge logic here
-          const { Token, Units, NetAmount, Levy, Arrears, TaxAmount, ZesaReference } = response.Tokens[ 0 ];
-          const { Amount, Meter, AccountName, Address } = response;
-
-          resolve( {
-            amount: Amount,
-            meter: Meter,
-            name: AccountName,
-            address: Address,
-            token: Token,
-            units: Units,
-            netamount: NetAmount,
-            levy: Levy,
-            arrears: Arrears,
-            tax: TaxAmount,
-            reference: ZesaReference
-          } )
-        } else
-        {
-
-          resolve( null );
-        }
-      } ).catch( ( error ) =>
-      {
-        resolve( {
-          error: true,
-          errorType: String( error.response.data.Message )
-        } )
-      } )
-  } )
+    const response = await recharge.rechargeZesa( amount, mobileNumber, meterNumber );
+    if ( response.ReplyCode === 2 )
+    {
+      // Successful recharge logic here
+      const { Token, Units, NetAmount, Levy, Arrears, TaxAmount, ZesaReference } = response.Tokens[ 0 ];
+      const { Amount, Meter, AccountName, Address } = response;
+      return {
+        amount: Amount,
+        meter: Meter,
+        name: AccountName,
+        address: Address,
+        token: Token,
+        units: Units,
+        netamount: NetAmount,
+        levy: Levy,
+        arrears: Arrears,
+        tax: TaxAmount,
+        reference: ZesaReference,
+      };
+    } else
+    {
+      return null;
+    }
+  } catch ( error )
+  {
+    if ( error.response && error.response.data )
+    {
+      return {
+        error: true,
+        errorType: String( error.response.data.Message ),
+      };
+    } else
+    {
+      // Handle other error cases if needed
+      return {
+        error: true,
+        errorType: 'Unknown error',
+      };
+    }
+  }
 }
 
 async function processAirtime ( amount, targetMobile, CustomerSMS )
 {
-  const response = await recharge.pinlessRecharge(
-    amount,
-    targetMobile,
-    '',
-    CustomerSMS,
-    Currency.USD
-  );
-  if ( response.ReplyCode == 2 )
+  try
   {
-    //recharge was successful and you can add your own business logic here
-    const { ReplyMsg, AgentReference } = response;
-    return ReplyMsg;
-  } else
+    const response = await recharge.pinlessRecharge(
+      amount,
+      targetMobile,
+      '',
+      CustomerSMS,
+      Currency.USD
+    );
+    if ( response.ReplyCode === 2 )
+    {
+      // Recharge was successful, and you can add your own business logic here
+      const { ReplyMsg, AgentReference } = response;
+      return ReplyMsg;
+    } else
+    {
+      return null;
+    }
+  } catch ( error )
   {
-    return null;
+    if ( error.response && error.response.data )
+    {
+      return {
+        error: true,
+        errorType: String( error.response.data.Message ),
+      };
+    } else
+    {
+      // Handle other error cases if needed
+      return {
+        error: true,
+        errorType: 'Unknown error',
+      };
+    }
   }
 }
 
 async function isValidPhone ( phone )
 {
-  if ( phone && phone.startsWith( "07" ) && phone.length === 10 )
+  if ( phone && phone.startsWith( '07' ) && phone.length === 10 )
   {
     return true;
   } else
@@ -82,36 +104,41 @@ async function isValidPhone ( phone )
 
 async function isValidMeter ( message )
 {
-
-  return new Promise( ( resolve ) =>
+  try
   {
-    recharge.enquireZesaCustomer( message )
-      .then( ( customer ) =>
-      {
-        if ( customer.ReplyCode === 2 )
-        {
-          resolve( {
-            meter: customer.Meter,
-            customerName: String( customer.CustomerInfo.CustomerName ).split( '\n' )[ 0 ],
-            address: String( customer.CustomerInfo.CustomerName ).split( '\n' )[ 1 ]
-          } )
-        } else
-        {
-          resolve( {
-            msg: "Invalid Meter"
-          } )
-        }
-      } ).catch( ( error ) =>
-      {
-        resolve( {
-          error: true,
-          errorType: String( error.response.data.Message )
-            .toLocaleLowerCase()
-            .includes( "invalid" ) ? "invalid" : "network"
-        } )
-      } )
-  } )
+    const customer = await recharge.enquireZesaCustomer( message );
+    if ( customer.ReplyCode === 2 )
+    {
+      return {
+        meter: customer.Meter,
+        customerName: String( customer.CustomerInfo.CustomerName ).split( '\n' )[ 0 ],
+        address: String( customer.CustomerInfo.CustomerName ).split( '\n' )[ 1 ],
+      };
+    } else
+    {
+      return {
+        msg: 'Invalid Meter',
+      };
+    }
+  } catch ( error )
+  {
+    if ( error.response && error.response.data )
+    {
+      return {
+        error: true,
+        errorType: String( error.response.data.Message ).toLowerCase().includes( 'invalid' )
+          ? 'invalid'
+          : 'network',
+      };
+    } else
+    {
+      // Handle other error cases if needed
+      return {
+        error: true,
+        errorType: 'Unknown error',
+      };
+    }
+  }
 }
-
 
 module.exports = { processAirtime, processZesaPayment, isValidPhone, isValidMeter };
