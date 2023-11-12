@@ -1,7 +1,7 @@
-var express = require( 'express' );
+const express = require( 'express' );
+const router = express.Router();
+const controller = require( './stripe.controller' );
 
-var controller = require( './stripe.controller' );
-var router = express.Router();
 router.get( '/success', controller.success );
 router.get( '/failure', controller.failure );
 

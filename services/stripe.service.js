@@ -5,6 +5,7 @@ async function checkout ( chatId, user, transaction_id, service )
 {
   console.log( 'Checkout initiated. Chat ID:', chatId, 'User:', user, 'Transaction ID:', transaction_id, 'Service:', service );
 
+  // Construct the URLs with placeholders
   const successUrl = `${ config.redirect_url }/stripe/success?session_id={CHECKOUT_SESSION_ID}&fname=${ user }&chat_id=${ chatId }&transaction=${ transaction_id }&service=${ service }`;
   const failerUrl = `${ config.redirect_url }/stripe/failure?session_id={CHECKOUT_SESSION_ID}&fname=${ user }&chat_id=${ chatId }&transaction=${ transaction_id }&service=${ service }`;
 
@@ -19,8 +20,8 @@ async function checkout ( chatId, user, transaction_id, service )
       },
     ],
     mode: 'payment',
-    success_url: successUrl,
-    cancel_url: failerUrl,
+    success_url: successUrl, // Use successUrl here
+    cancel_url: failerUrl,   // Use failerUrl here
   } );
 
   console.log( 'Stripe checkout session created:', session );
